@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mohicano</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="header">
+    <div class="logo">
+        <img src="/Imagenes/Logo/Logo.webp" alt="Mohicano Logo">
+    </div>
+    <div id="cartToggle" class="cart-btn">
+        🛒 <span id="cartCount">0</span>
+    </div>
+</header>
+
+<section class="hero">
+  <h1 class="hero-title">Nueva Colección</h1>
+  <p class="hero-sub">Diseño moderno. Calidad premium.</p>
+</section>
+
+<section id="grid" class="product-grid"></section>
+
+<!-- SIDEBAR CARRITO -->
+<div id="cartSidebar" class="cart-sidebar">
+    <button id="closeCart" class="cart-close">✕</button>
+    <h2>Tu Pedido</h2>
+    <div id="cartItems"></div>
+
+    <input type="text" id="userName" placeholder="Nombre de tu tienda">
+    <button id="sendRequest">Enviar Cotización</button>
+</div>
+
+<!-- MODAL PRODUCTO -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+
+    <span id="closeModal" class="close-modal">×</span>
+
+    <div class="modal-left">
+        <div class="image-viewer">
+            <img id="viewerImg">
+        </div>
+        <div id="thumbContainer" class="thumbnails"></div>
+    </div>
+
+    <div class="modal-right">
+        <h2 id="modalTitle"></h2>
+        <div id="variantContainer" class="variants"></div>
+        <div class="sizes">
+            <label>38 <input type="number" id="t38"></label>
+            <label>40 <input type="number" id="t40"></label>
+            <label>42 <input type="number" id="t42"></label>
+            <label>44 <input type="number" id="t44"></label>
+            <label>46 <input type="number" id="t46"></label>
+            <label>48 <input type="number" id="t48"></label>
+        </div>
+
+        <button id="addBtn">Agregar al Pedido</button>
+    </div>
+
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
