@@ -788,7 +788,6 @@ function renderCotizacionesAdmin(quotes = [], items = []) {
               <span class="quote-code-pill">${codigo}</span>
               <button type="button" class="ghost-btn quote-export-btn" data-quote-export="${q.id}">Descargar</button>
             </div>
-            <div class="quote-meta">ID interno: ${q.id}</div>
           </div>
           <div class="quote-meta">Total items: ${q.total_items || 0}<br>${fecha}</div>
         </div>
