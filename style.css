@@ -863,6 +863,17 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
   font-weight:800;
 }
 
+.quote-card-title-row{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.quote-meta-inline{
+  margin-top:2px;
+}
+
 .quote-code-row{
   margin-top:6px;
   display:flex;
@@ -945,6 +956,19 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
   border:1px solid rgba(0,0,0,0.05);
   padding:8px 10px;
   font-size:13px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.quote-item-model{
+  font-weight:700;
+  color:#0f172a;
+}
+
+.quote-item-sizes{
+  color:#475569;
+  line-height:1.35;
 }
 
 .success-toast{
@@ -1115,7 +1139,7 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
   border:none;
   border-radius:14px;
 
-  background: linear-gradient(135deg, #1f2937, #0b1220);
+  background: linear-gradient(135deg, #5587ce, #5780d1);
   color:#fff;
   font-weight:700;
   letter-spacing:0.2px;

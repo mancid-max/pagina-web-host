@@ -894,6 +894,19 @@ function agruparItemsPorQuote(items = []) {
   return map;
 }
 
+function agruparDetallePorModelo(items = []) {
+  const map = new Map();
+  items.forEach((it) => {
+    const sku = String(it.sku || "");
+    if (!sku) return;
+    if (!map.has(sku)) map.set(sku, {});
+    const tallas = map.get(sku);
+    const talla = String(it.size || "");
+    tallas[talla] = (Number(tallas[talla]) || 0) + (Number(it.quantity) || 0);
+  });
+  return [...map.entries()].map(([sku, tallas]) => ({ sku, tallas }));
+}
+
 function renderCotizacionesAdmin(quotes = [], items = []) {
   const list = document.getElementById("quotesList");
   if (!list) return;
@@ -910,6 +923,7 @@ function renderCotizacionesAdmin(quotes = [], items = []) {
       if (String(a.sku) !== String(b.sku)) return String(a.sku).localeCompare(String(b.sku));
       return String(a.size).localeCompare(String(b.size), undefined, { numeric: true });
     });
+    const detalleAgrupado = agruparDetallePorModelo(detalles);
     const fecha = q.created_at ? new Date(q.created_at).toLocaleString() : "-";
     const isReady = !!q.is_ready;
     const codigo = generarCodigoCotizacionVisual(q);
@@ -917,12 +931,14 @@ function renderCotizacionesAdmin(quotes = [], items = []) {
       <div class="quote-card" data-quote-id="${q.id}">
         <div class="quote-card-head">
           <div>
-            <div class="quote-card-title">${q.store_name || "Sin tienda"}</div>
+            <div class="quote-card-title-row">
+              <div class="quote-card-title">${q.store_name || "Sin tienda"}</div>
+              ${q.client_rut ? `<div class="quote-meta quote-meta-inline">RUT: ${q.client_rut}</div>` : ""}
+            </div>
             <div class="quote-code-row">
               <span class="quote-code-pill">${codigo}</span>
-              <button type="button" class="ghost-btn quote-export-btn" data-quote-export="${q.id}">Descargar</button>
+              <button type="button" class="ghost-btn quote-export-btn" data-quote-export="${q.id}">Descargar Excel</button>
             </div>
-            ${q.client_rut ? `<div class="quote-meta">RUT: ${q.client_rut}</div>` : ""}
           </div>
           <div class="quote-meta">Total items: ${q.total_items || 0}<br>${fecha}</div>
         </div>
@@ -936,8 +952,14 @@ function renderCotizacionesAdmin(quotes = [], items = []) {
           </label>
         </div>
         <div class="quote-items-grid">
-          ${detalles.length
-            ? detalles.map((it) => `<div class="quote-item-line">Modelo ${it.sku} · Talla ${it.size} · <strong>${it.quantity}</strong></div>`).join("")
+          ${detalleAgrupado.length
+            ? detalleAgrupado.map((g) => {
+              const tallasTxt = Object.entries(g.tallas)
+                .sort((a, b) => String(a[0]).localeCompare(String(b[0]), undefined, { numeric: true }))
+                .map(([t, q]) => `T${t}: <strong>${q}</strong>`)
+                .join(" · ");
+              return `<div class="quote-item-line"><span class="quote-item-model">Modelo ${g.sku}</span><span class="quote-item-sizes">${tallasTxt}</span></div>`;
+            }).join("")
             : `<div class="quote-item-line">Sin detalle</div>`
           }
         </div>
