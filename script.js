@@ -922,6 +922,7 @@ function renderCotizacionesAdmin(quotes = [], items = []) {
               <span class="quote-code-pill">${codigo}</span>
               <button type="button" class="ghost-btn quote-export-btn" data-quote-export="${q.id}">Descargar</button>
             </div>
+            ${q.client_rut ? `<div class="quote-meta">RUT: ${q.client_rut}</div>` : ""}
           </div>
           <div class="quote-meta">Total items: ${q.total_items || 0}<br>${fecha}</div>
         </div>
@@ -976,7 +977,7 @@ async function cargarCotizacionesAdmin() {
   };
 
   const quotesRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/quotes?select=id,store_name,total_items,created_at,created_at_client,source,is_ready,ready_at&order=created_at.desc&limit=50`,
+    `${SUPABASE_URL}/rest/v1/quotes?select=id,store_name,client_rut,client_rut_normalized,total_items,created_at,created_at_client,source,is_ready,ready_at&order=created_at.desc&limit=50`,
     { headers }
   );
 
