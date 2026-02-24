@@ -5,6 +5,7 @@ let productos = [];
 let pedido = [];
 let skuActivo = "";
 let draftTallasPorSku = {}; // { "4204": {38:2,40:1}, "4204-02": {...} }
+const TALLAS_DISPONIBLES = ["36", "38", "40", "42", "44", "46"];
 
 const ASSET_VERSION = Date.now();
 
@@ -82,16 +83,21 @@ function renderImages(imageList) {
  ***********************/
 function leerTallasUI() {
   const tallas = {};
-  ["38", "40", "42", "44", "46", "48"].forEach((t) => {
+  TALLAS_DISPONIBLES.forEach((t) => {
     const el = document.getElementById("t" + t);
     const v = parseInt(el?.value || "0", 10);
-    if (!isNaN(v) && v > 0) tallas[t] = v;
+    if (!el) return;
+    if (isNaN(v) || v <= 0) {
+      if (String(el.value).trim() !== "" && Number(el.value) < 0) el.value = "0";
+      return;
+    }
+    tallas[t] = v;
   });
   return tallas;
 }
 
 function escribirTallasUI(tallas = {}) {
-  ["38", "40", "42", "44", "46", "48"].forEach((t) => {
+  TALLAS_DISPONIBLES.forEach((t) => {
     const el = document.getElementById("t" + t);
     if (!el) return;
     el.value = tallas[t] ? String(tallas[t]) : "";
@@ -111,6 +117,25 @@ function resetDraftsModal() {
   draftTallasPorSku = {};
   skuActivo = "";
   escribirTallasUI({});
+}
+
+function configurarInputsTallas() {
+  TALLAS_DISPONIBLES.forEach((t) => {
+    const el = document.getElementById("t" + t);
+    if (!el) return;
+    el.min = "0";
+    el.step = "1";
+    el.addEventListener("input", () => {
+      if (el.value === "") return;
+      let n = parseInt(el.value, 10);
+      if (isNaN(n)) {
+        el.value = "";
+        return;
+      }
+      if (n < 0) n = 0;
+      el.value = String(n);
+    });
+  });
 }
 
 /***********************
@@ -256,7 +281,16 @@ document.getElementById("addBtn").onclick = () => {
   for (const [sku, tallas] of Object.entries(draftTallasPorSku)) {
     const total = Object.values(tallas).reduce((a, b) => a + b, 0);
     if (total > 0) {
-      pedido.push({ sku, tallas });
+      const existente = pedido.find((item) => item.sku === sku);
+      if (existente) {
+        Object.entries(tallas).forEach(([talla, cantidad]) => {
+          const qty = Number(cantidad) || 0;
+          if (qty <= 0) return;
+          existente.tallas[talla] = (Number(existente.tallas[talla]) || 0) + qty;
+        });
+      } else {
+        pedido.push({ sku, tallas: { ...tallas } });
+      }
       agregoAlgo = true;
     }
   }
@@ -486,7 +520,9 @@ document.getElementById("sendRequest").onclick = async () => {
     btn.innerText = textoOriginal;
   }
 };
-  document.getElementById("closeCart").onclick = () => {
+configurarInputsTallas();
+
+document.getElementById("closeCart").onclick = () => {
   document.getElementById("cartSidebar").classList.remove("open");
   document.querySelector(".cart-overlay")?.classList.remove("active");
 };
