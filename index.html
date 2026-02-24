@@ -14,14 +14,23 @@
     <div class="logo">
         <img src="Imagenes/Logo/Logo.png" alt="Mohicano Logo">
     </div>
-    <div id="cartToggle" class="cart-btn">
-        🛒 <span id="cartCount">0</span>
+    <div class="header-actions">
+        <button id="quotesAdminBtn" class="ghost-btn" type="button">Ver Cotizaciones</button>
+        <div id="cartToggle" class="cart-btn">
+            🛒 <span id="cartCount">0</span>
+        </div>
     </div>
 </header>
 
 <section class="hero">
   <h1 class="hero-title">Nueva Colección</h1>
   <p class="hero-sub">Diseño moderno. Calidad premium.</p>
+  <div class="model-search">
+    <input id="modelSearchInput" list="modelSuggestions" type="text" inputmode="numeric" placeholder="Buscar modelo (ej: 4206)">
+    <datalist id="modelSuggestions"></datalist>
+    <button id="modelSearchBtn" type="button">Buscar</button>
+    <button id="modelSearchClear" type="button" class="ghost-btn">Limpiar</button>
+  </div>
 </section>
 
 <section id="grid" class="product-grid"></section>
@@ -66,6 +75,36 @@
         <button id="addBtn">Agregar cotización</button>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL COTIZACIONES (ADMIN) -->
+<div id="quotesModal" class="modal">
+  <div class="modal-content quotes-modal-content">
+    <span id="closeQuotesModal" class="close-modal">×</span>
+
+    <div class="quotes-admin">
+      <div class="quotes-admin-head">
+        <h2>Cotizaciones</h2>
+        <div class="quotes-admin-actions">
+          <button id="refreshQuotesBtn" type="button" class="ghost-btn">Actualizar</button>
+          <button id="logoutQuotesBtn" type="button" class="ghost-btn">Cerrar sesión</button>
+        </div>
+      </div>
+
+      <div id="quotesLoginSection" class="quotes-login">
+        <p>Ingresa con un usuario de Supabase Auth para ver cotizaciones.</p>
+        <input id="quotesEmail" type="email" placeholder="Correo administrador">
+        <input id="quotesPassword" type="password" placeholder="Contraseña">
+        <button id="quotesLoginBtn" type="button">Ingresar</button>
+        <div id="quotesLoginMsg" class="quotes-msg"></div>
+      </div>
+
+      <div id="quotesPanel" class="quotes-panel" style="display:none;">
+        <div id="quotesUserBadge" class="quotes-user-badge"></div>
+        <div id="quotesList" class="quotes-list"></div>
+      </div>
+    </div>
   </div>
 </div>
 

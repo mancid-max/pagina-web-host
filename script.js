@@ -6,6 +6,8 @@ let pedido = [];
 let skuActivo = "";
 let draftTallasPorSku = {}; // { "4204": {38:2,40:1}, "4204-02": {...} }
 const TALLAS_DISPONIBLES = ["36", "38", "40", "42", "44", "46"];
+let quotesAccessToken = sessionStorage.getItem("quotes_access_token") || "";
+let quotesUserEmail = sessionStorage.getItem("quotes_user_email") || "";
 
 const ASSET_VERSION = Date.now();
 
@@ -35,6 +37,7 @@ fetch("data.json?v=" + Date.now())
   .then((data) => {
     productos = data;
     renderGrid(productos);
+    inicializarBuscadorModelos();
   })
   .catch((err) => console.error("Error cargando data.json:", err));
 
@@ -138,6 +141,57 @@ function configurarInputsTallas() {
   });
 }
 
+function inicializarBuscadorModelos() {
+  const input = document.getElementById("modelSearchInput");
+  const datalist = document.getElementById("modelSuggestions");
+  const btnBuscar = document.getElementById("modelSearchBtn");
+  const btnLimpiar = document.getElementById("modelSearchClear");
+  if (!input || !datalist || !btnBuscar || !btnLimpiar) return;
+
+  const modelos = [...new Set(productos.map((p) => String(p.family)).filter(Boolean))].sort();
+  datalist.innerHTML = modelos.map((m) => `<option value="${m}"></option>`).join("");
+
+  const filtrarGrid = (term) => {
+    if (!term) {
+      renderGrid(productos);
+      return;
+    }
+    renderGrid(productos.filter((p) => String(p.family).includes(term)));
+  };
+
+  const buscarModelo = () => {
+    const term = input.value.trim();
+    if (!term) {
+      renderGrid(productos);
+      return;
+    }
+
+    const exacto = productos.find((p) => String(p.family) === term);
+    if (exacto) {
+      renderGrid(productos);
+      setTimeout(() => verProducto(exacto.family), 0);
+      return;
+    }
+
+    filtrarGrid(term);
+  };
+
+  input.addEventListener("input", () => filtrarGrid(input.value.trim()));
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      buscarModelo();
+    }
+  });
+
+  btnBuscar.addEventListener("click", buscarModelo);
+  btnLimpiar.addEventListener("click", () => {
+    input.value = "";
+    renderGrid(productos);
+    input.focus();
+  });
+}
+
 /***********************
  * GRID
  ***********************/
@@ -146,7 +200,7 @@ function renderGrid(lista) {
   container.innerHTML = lista
     .map(
       (p) => `
-      <div class="card" onclick="verProducto('${p.family}')">
+      <div class="card" data-family="${p.family}" onclick="verProducto('${p.family}')">
         <img src="${withCacheBust(p.main_image)}" alt="Modelo ${p.family}">
         <div>Modelo ${p.family}</div>
       </div>
@@ -484,6 +538,212 @@ async function guardarCotizacionSupabase(nombreTienda) {
   return quoteRow.id;
 }
 
+async function loginCotizacionesSupabase(email, password) {
+  if (!supabaseConfigurado()) {
+    throw new Error("Configura SUPABASE_URL y SUPABASE_ANON_KEY en script.js");
+  }
+
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.error_description || data?.msg || "Login invalido");
+  }
+
+  if (!data?.access_token) throw new Error("No se recibio access_token");
+  quotesAccessToken = data.access_token;
+  quotesUserEmail = data?.user?.email || email;
+  sessionStorage.setItem("quotes_access_token", quotesAccessToken);
+  sessionStorage.setItem("quotes_user_email", quotesUserEmail);
+}
+
+function logoutCotizaciones() {
+  quotesAccessToken = "";
+  quotesUserEmail = "";
+  sessionStorage.removeItem("quotes_access_token");
+  sessionStorage.removeItem("quotes_user_email");
+  actualizarEstadoQuotesUI();
+  const list = document.getElementById("quotesList");
+  if (list) list.innerHTML = "";
+}
+
+function actualizarEstadoQuotesUI(msg = "") {
+  const loginSection = document.getElementById("quotesLoginSection");
+  const panel = document.getElementById("quotesPanel");
+  const badge = document.getElementById("quotesUserBadge");
+  const msgEl = document.getElementById("quotesLoginMsg");
+  const refreshBtn = document.getElementById("refreshQuotesBtn");
+  const logoutBtn = document.getElementById("logoutQuotesBtn");
+  const autenticado = !!quotesAccessToken;
+
+  if (msgEl) msgEl.innerText = msg;
+  if (loginSection) loginSection.style.display = autenticado ? "none" : "flex";
+  if (panel) panel.style.display = autenticado ? "flex" : "none";
+  if (badge) badge.innerText = autenticado ? `Sesion: ${quotesUserEmail}` : "";
+  if (refreshBtn) refreshBtn.style.display = autenticado ? "inline-flex" : "none";
+  if (logoutBtn) logoutBtn.style.display = autenticado ? "inline-flex" : "none";
+}
+
+function agruparItemsPorQuote(items = []) {
+  const map = new Map();
+  items.forEach((it) => {
+    if (!map.has(it.quote_id)) map.set(it.quote_id, []);
+    map.get(it.quote_id).push(it);
+  });
+  return map;
+}
+
+function renderCotizacionesAdmin(quotes = [], items = []) {
+  const list = document.getElementById("quotesList");
+  if (!list) return;
+
+  if (!quotes.length) {
+    list.innerHTML = `<div class="quote-card"><div class="quote-meta">No hay cotizaciones para mostrar.</div></div>`;
+    return;
+  }
+
+  const itemsMap = agruparItemsPorQuote(items);
+  list.innerHTML = quotes.map((q) => {
+    const detalles = (itemsMap.get(q.id) || []).sort((a, b) => {
+      if (String(a.sku) !== String(b.sku)) return String(a.sku).localeCompare(String(b.sku));
+      return String(a.size).localeCompare(String(b.size), undefined, { numeric: true });
+    });
+    const fecha = q.created_at ? new Date(q.created_at).toLocaleString() : "-";
+    return `
+      <div class="quote-card">
+        <div class="quote-card-head">
+          <div>
+            <div class="quote-card-title">${q.store_name || "Sin tienda"}</div>
+            <div class="quote-meta">ID: ${q.id}</div>
+          </div>
+          <div class="quote-meta">Total items: ${q.total_items || 0}<br>${fecha}</div>
+        </div>
+        <div class="quote-items-grid">
+          ${detalles.length
+            ? detalles.map((it) => `<div class="quote-item-line">Modelo ${it.sku} · Talla ${it.size} · <strong>${it.quantity}</strong></div>`).join("")
+            : `<div class="quote-item-line">Sin detalle</div>`
+          }
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+async function cargarCotizacionesAdmin() {
+  if (!quotesAccessToken) throw new Error("Debes iniciar sesion");
+
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${quotesAccessToken}`,
+  };
+
+  const quotesRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/quotes?select=id,store_name,total_items,created_at,created_at_client,source&order=created_at.desc&limit=50`,
+    { headers }
+  );
+
+  if (!quotesRes.ok) {
+    if (quotesRes.status === 401 || quotesRes.status === 403) logoutCotizaciones();
+    const errText = await quotesRes.text();
+    throw new Error(`No se pudieron cargar cotizaciones: ${errText || quotesRes.status}`);
+  }
+
+  const quotes = await quotesRes.json();
+  if (!quotes.length) {
+    renderCotizacionesAdmin([], []);
+    return;
+  }
+
+  const ids = quotes.map((q) => q.id).filter(Boolean);
+  let items = [];
+  if (ids.length) {
+    const inFilter = `(${ids.join(",")})`;
+    const itemsRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/quote_items?select=quote_id,sku,size,quantity&quote_id=in.${inFilter}&order=id.desc`,
+      { headers }
+    );
+    if (!itemsRes.ok) {
+      const errText = await itemsRes.text();
+      throw new Error(`No se pudieron cargar items: ${errText || itemsRes.status}`);
+    }
+    items = await itemsRes.json();
+  }
+
+  renderCotizacionesAdmin(quotes, items);
+}
+
+function abrirQuotesModal() {
+  document.getElementById("quotesModal")?.classList.add("active");
+  actualizarEstadoQuotesUI("");
+  if (quotesAccessToken) {
+    cargarCotizacionesAdmin().catch((err) => actualizarEstadoQuotesUI(err.message || "Error cargando"));
+  }
+}
+
+function cerrarQuotesModal() {
+  document.getElementById("quotesModal")?.classList.remove("active");
+}
+
+function configurarPanelCotizaciones() {
+  const btnOpen = document.getElementById("quotesAdminBtn");
+  const btnClose = document.getElementById("closeQuotesModal");
+  const modal = document.getElementById("quotesModal");
+  const btnLogin = document.getElementById("quotesLoginBtn");
+  const btnRefresh = document.getElementById("refreshQuotesBtn");
+  const btnLogout = document.getElementById("logoutQuotesBtn");
+  const emailEl = document.getElementById("quotesEmail");
+  const passEl = document.getElementById("quotesPassword");
+
+  actualizarEstadoQuotesUI("");
+
+  btnOpen?.addEventListener("click", abrirQuotesModal);
+  btnClose?.addEventListener("click", cerrarQuotesModal);
+  modal?.addEventListener("click", (e) => {
+    if (e.target?.id === "quotesModal") cerrarQuotesModal();
+  });
+
+  btnLogin?.addEventListener("click", async () => {
+    const email = emailEl?.value.trim();
+    const password = passEl?.value || "";
+    if (!email || !password) {
+      actualizarEstadoQuotesUI("Ingresa correo y contrasena");
+      return;
+    }
+
+    btnLogin.disabled = true;
+    btnLogin.innerText = "Ingresando...";
+    actualizarEstadoQuotesUI("Validando acceso...");
+    try {
+      await loginCotizacionesSupabase(email, password);
+      actualizarEstadoQuotesUI("");
+      await cargarCotizacionesAdmin();
+      if (passEl) passEl.value = "";
+    } catch (err) {
+      actualizarEstadoQuotesUI(err.message || "No se pudo iniciar sesion");
+    } finally {
+      btnLogin.disabled = false;
+      btnLogin.innerText = "Ingresar";
+    }
+  });
+
+  btnRefresh?.addEventListener("click", async () => {
+    try {
+      await cargarCotizacionesAdmin();
+    } catch (err) {
+      actualizarEstadoQuotesUI(err.message || "No se pudo actualizar");
+    }
+  });
+
+  btnLogout?.addEventListener("click", logoutCotizaciones);
+}
+
 function limpiarCarrito() {
   pedido = [];
   actualizarCarrito();
@@ -521,6 +781,7 @@ document.getElementById("sendRequest").onclick = async () => {
   }
 };
 configurarInputsTallas();
+configurarPanelCotizaciones();
 
 document.getElementById("closeCart").onclick = () => {
   document.getElementById("cartSidebar").classList.remove("open");
