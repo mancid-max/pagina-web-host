@@ -845,10 +845,11 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
 }
 
 .quote-card{
-  border:1px solid rgba(0,0,0,0.06);
+  border:1px solid rgba(0,0,0,0.12);
   background: #fff;
   border-radius:16px;
   padding:14px;
+  box-shadow: 0 8px 20px rgba(15,23,42,0.04);
 }
 
 .quote-card-head{
@@ -908,7 +909,7 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
   justify-content:space-between;
   gap:10px;
   margin: 10px 0 8px;
-  border:1px solid rgba(0,0,0,0.06);
+  border:1px solid rgba(0,0,0,0.12);
   background:#f8fafc;
   border-radius:12px;
   padding:10px 12px;
@@ -953,7 +954,7 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
 .quote-item-line{
   border-radius:10px;
   background: #f7f8fb;
-  border:1px solid rgba(0,0,0,0.05);
+  border:1px solid rgba(0,0,0,0.12);
   padding:8px 10px;
   font-size:13px;
   display:flex;
