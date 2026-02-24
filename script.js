@@ -540,6 +540,9 @@ function descargarArchivo(nombre, contenido, mime) {
 
 function construirPayloadCotizacion(nombreTienda) {
   const createdAtIso = new Date().toISOString();
+  const quoteId = (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function")
+    ? globalThis.crypto.randomUUID()
+    : `q-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   let totalItems = 0;
   const lineas = [];
 
@@ -554,6 +557,7 @@ function construirPayloadCotizacion(nombreTienda) {
 
   return {
     quote: {
+      id: quoteId,
       store_name: nombreTienda,
       total_items: totalItems,
       created_at_client: createdAtIso,
@@ -579,7 +583,7 @@ async function guardarCotizacionSupabase(nombreTienda) {
 
   const quoteRes = await fetch(`${SUPABASE_URL}/rest/v1/quotes`, {
     method: "POST",
-    headers: { ...headers, Prefer: "return=representation" },
+    headers: { ...headers, Prefer: "return=minimal" },
     body: JSON.stringify([payload.quote]),
   });
 
@@ -588,12 +592,11 @@ async function guardarCotizacionSupabase(nombreTienda) {
     throw new Error(`Error guardando cotizacion: ${errText || quoteRes.status}`);
   }
 
-  const rows = await quoteRes.json();
-  const quoteRow = rows?.[0];
-  if (!quoteRow?.id) throw new Error("Supabase no devolvio el ID de la cotizacion");
+  const quoteId = payload.quote.id;
+  if (!quoteId) throw new Error("No se genero ID de cotizacion");
 
   const detailRows = payload.items.map((it) => ({
-    quote_id: quoteRow.id,
+    quote_id: quoteId,
     sku: it.sku,
     size: String(it.talla),
     quantity: Number(it.cantidad),
@@ -610,7 +613,7 @@ async function guardarCotizacionSupabase(nombreTienda) {
     throw new Error(`Error guardando detalle: ${errText || itemsRes.status}`);
   }
 
-  return quoteRow.id;
+  return quoteId;
 }
 
 async function loginCotizacionesSupabase(email, password) {
