@@ -43,7 +43,7 @@ body{
 .header-actions{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:18px;
 }
 
 .ghost-btn{
@@ -61,6 +61,11 @@ body{
   border-color: rgba(0,0,0,0.2);
   background:#fff;
   transform: translateY(-1px);
+}
+
+.admin-btn{
+  letter-spacing:.6px;
+  padding-inline:16px;
 }
 
 nav a{
