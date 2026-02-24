@@ -8,6 +8,7 @@ let draftTallasPorSku = {}; // legacy (borradores desactivados)
 const TALLAS_DISPONIBLES = ["36", "38", "40", "42", "44", "46"];
 let quotesAccessToken = sessionStorage.getItem("quotes_access_token") || "";
 let quotesUserEmail = sessionStorage.getItem("quotes_user_email") || "";
+let quotesAdminCache = { quotes: [], itemsByQuote: new Map() };
 
 const ASSET_VERSION = Date.now();
 
@@ -538,6 +539,71 @@ function descargarArchivo(nombre, contenido, mime) {
   URL.revokeObjectURL(url);
 }
 
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function generarCodigoCotizacionVisual(q) {
+  if (!q) return "COT-";
+  const d = q.created_at ? new Date(q.created_at) : new Date();
+  const fecha = `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}`;
+  const hora = `${pad2(d.getHours())}${pad2(d.getMinutes())}`;
+  const tail = String(q.id || "").replace(/-/g, "").slice(0, 6).toUpperCase();
+  return `COT-${fecha}-${hora}-${tail || "000000"}`;
+}
+
+function generarCSVQuoteAdmin(quote, items = []) {
+  const sep = ";";
+  const BOM = "\uFEFF";
+  const fecha = quote?.created_at ? new Date(quote.created_at).toLocaleString() : "";
+  const codigo = generarCodigoCotizacionVisual(quote);
+  const estado = quote?.is_ready ? "Cotizacion lista" : "En proceso";
+  const rows = [];
+
+  rows.push(["RESUMEN COTIZACION"]);
+  rows.push(["Codigo", codigo]);
+  rows.push(["Tienda", quote?.store_name || ""]);
+  rows.push(["Estado", estado]);
+  rows.push(["Fecha", fecha]);
+  rows.push(["Total items", quote?.total_items || 0]);
+  rows.push(["ID interno (UUID)", quote?.id || ""]);
+  rows.push([]);
+  rows.push(["DETALLE SOLICITADO POR CLIENTE"]);
+  rows.push(["Modelo", "Talla", "Cantidad"]);
+
+  let total = 0;
+  const ordered = [...items].sort((a, b) => {
+    if (String(a.sku) !== String(b.sku)) return String(a.sku).localeCompare(String(b.sku));
+    return String(a.size).localeCompare(String(b.size), undefined, { numeric: true });
+  });
+
+  ordered.forEach((it) => {
+    rows.push([it.sku, it.size, it.quantity]);
+    total += Number(it.quantity) || 0;
+  });
+
+  rows.push([]);
+  rows.push(["TOTAL GENERAL", "", total]);
+
+  const csvBody = rows
+    .map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(sep))
+    .join("\n");
+  return BOM + csvBody;
+}
+
+function descargarCotizacionAdmin(quoteId) {
+  const quote = quotesAdminCache.quotes.find((q) => q.id === quoteId);
+  const items = quotesAdminCache.itemsByQuote.get(quoteId) || [];
+  if (!quote) {
+    actualizarEstadoQuotesUI("No se encontro la cotizacion para descargar");
+    return;
+  }
+  const codigo = generarCodigoCotizacionVisual(quote).replace(/[^\w-]/g, "_");
+  const tienda = String(quote.store_name || "tienda").replace(/\s+/g, "_");
+  const csv = generarCSVQuoteAdmin(quote, items);
+  descargarArchivo(`${codigo}_${tienda}.csv`, csv, "text/csv;charset=utf-8;");
+}
+
 function mostrarToastExito() {
   const toast = document.getElementById("successToast");
   if (!toast) return;
@@ -703,6 +769,7 @@ function renderCotizacionesAdmin(quotes = [], items = []) {
   }
 
   const itemsMap = agruparItemsPorQuote(items);
+  quotesAdminCache = { quotes: [...quotes], itemsByQuote: itemsMap };
   list.innerHTML = quotes.map((q) => {
     const detalles = (itemsMap.get(q.id) || []).sort((a, b) => {
       if (String(a.sku) !== String(b.sku)) return String(a.sku).localeCompare(String(b.sku));
@@ -710,12 +777,17 @@ function renderCotizacionesAdmin(quotes = [], items = []) {
     });
     const fecha = q.created_at ? new Date(q.created_at).toLocaleString() : "-";
     const isReady = !!q.is_ready;
+    const codigo = generarCodigoCotizacionVisual(q);
     return `
       <div class="quote-card" data-quote-id="${q.id}">
         <div class="quote-card-head">
           <div>
             <div class="quote-card-title">${q.store_name || "Sin tienda"}</div>
-            <div class="quote-meta">ID: ${q.id}</div>
+            <div class="quote-code-row">
+              <span class="quote-code-pill">${codigo}</span>
+              <button type="button" class="ghost-btn quote-export-btn" data-quote-export="${q.id}">Excel</button>
+            </div>
+            <div class="quote-meta">ID interno: ${q.id}</div>
           </div>
           <div class="quote-meta">Total items: ${q.total_items || 0}<br>${fecha}</div>
         </div>
@@ -884,6 +956,12 @@ function configurarPanelCotizaciones() {
     } finally {
       checkbox.disabled = false;
     }
+  });
+
+  quotesListEl?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-quote-export]");
+    if (!btn) return;
+    descargarCotizacionAdmin(btn.dataset.quoteExport);
   });
 }
 
