@@ -9,6 +9,8 @@ const TALLAS_DISPONIBLES = ["36", "38", "40", "42", "44", "46"];
 let quotesAccessToken = sessionStorage.getItem("quotes_access_token") || "";
 let quotesUserEmail = sessionStorage.getItem("quotes_user_email") || "";
 let quotesAdminCache = { quotes: [], itemsByQuote: new Map() };
+let clienteSeleccionado = null; // { rut, rut_normalized, razon_social }
+let clientLookupDebounce = null;
 
 const ASSET_VERSION = Date.now();
 
@@ -28,6 +30,29 @@ function supabaseConfigurado() {
     typeof SUPABASE_ANON_KEY === "string" &&
     SUPABASE_ANON_KEY.trim().length > 20
   );
+}
+
+function normalizarRut(valor) {
+  return String(valor || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\./g, "")
+    .replace(/\s+/g, "")
+    .replace(/[^0-9K-]/g, "");
+}
+
+function formatearRutVisual(rut) {
+  const n = normalizarRut(rut);
+  if (!n) return "";
+  const [bodyRaw, dvRaw] = n.split("-");
+  if (!bodyRaw || !dvRaw) return n;
+  const body = bodyRaw.replace(/^0+/, "") || "0";
+  const invert = body.split("").reverse();
+  const parts = [];
+  for (let i = 0; i < invert.length; i += 3) {
+    parts.push(invert.slice(i, i + 3).reverse().join(""));
+  }
+  return `${parts.reverse().join(".")}-${dvRaw}`;
 }
 
 /***********************
@@ -488,13 +513,15 @@ document.addEventListener("click", (e) => {
  * COTIZACIÓN: CSV + MAILTO + LIMPIEZA
  ***********************/
 function generarCSV() {
-  const nombreTienda = document.getElementById("userName").value.trim();
+  const nombreTienda = clienteSeleccionado?.razon_social || "";
+  const rutCliente = clienteSeleccionado?.rut || clienteSeleccionado?.rut_normalized || "";
   if (!nombreTienda || !pedido.length) return null;
 
   const sep = ";";
   let rows = [];
 
-  rows.push(["Tienda", nombreTienda]);
+  rows.push(["RUT", rutCliente]);
+  rows.push(["Cliente", nombreTienda]);
   rows.push([]);
   rows.push(["SKU", "Talla", "Cantidad"]);
 
@@ -620,7 +647,112 @@ function mostrarToastExito() {
   }, 3300);
 }
 
-function construirPayloadCotizacion(nombreTienda) {
+function setClientLookupUI({ tipo = "", texto = "", badge = "" } = {}) {
+  const msgEl = document.getElementById("clientLookupMsg");
+  const badgeEl = document.getElementById("clientLookupBadge");
+  if (msgEl) {
+    msgEl.className = "client-lookup-msg" + (tipo ? ` ${tipo}` : "");
+    msgEl.innerText = texto || "";
+    if (tipo === "error") {
+      msgEl.classList.remove("shake");
+      void msgEl.offsetWidth;
+      msgEl.classList.add("shake");
+    }
+  }
+  if (badgeEl) {
+    if (badge) {
+      badgeEl.hidden = false;
+      badgeEl.innerText = badge;
+    } else {
+      badgeEl.hidden = true;
+      badgeEl.innerText = "";
+    }
+  }
+}
+
+async function buscarClientePorRutSupabase(rutInput) {
+  const rutNormalizado = normalizarRut(rutInput);
+  if (!rutNormalizado) return null;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/lookup_client_by_rut`, {
+    method: "POST",
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ p_rut: rutNormalizado }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`No se pudo validar RUT: ${txt || res.status}`);
+  }
+  const data = await res.json();
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) return null;
+  return {
+    rut: row.rut || rutInput,
+    rut_normalized: row.rut_normalized || rutNormalizado,
+    razon_social: row.razon_social || "",
+  };
+}
+
+async function validarRutClienteEnUI({ silencioso = false } = {}) {
+  const input = document.getElementById("clientRut");
+  if (!input) return null;
+  const raw = input.value.trim();
+  const rutNormalizado = normalizarRut(raw);
+
+  clienteSeleccionado = null;
+
+  if (!rutNormalizado) {
+    setClientLookupUI();
+    return null;
+  }
+
+  if (!/^[0-9]+-[0-9K]$/i.test(rutNormalizado)) {
+    if (!silencioso) setClientLookupUI({ tipo: "error", texto: "Formato de RUT inválido" });
+    return null;
+  }
+
+  setClientLookupUI({ tipo: "loading", texto: "Buscando cliente..." });
+  try {
+    const cliente = await buscarClientePorRutSupabase(rutNormalizado);
+    if (!cliente) {
+      setClientLookupUI({ tipo: "error", texto: "Cliente no existe" });
+      return null;
+    }
+    clienteSeleccionado = cliente;
+    input.value = formatearRutVisual(cliente.rut || cliente.rut_normalized);
+    setClientLookupUI({
+      tipo: "ok",
+      texto: "Cliente encontrado",
+      badge: cliente.razon_social,
+    });
+    return cliente;
+  } catch (err) {
+    setClientLookupUI({ tipo: "error", texto: err.message || "No se pudo validar RUT" });
+    return null;
+  }
+}
+
+function configurarLookupCliente() {
+  const input = document.getElementById("clientRut");
+  if (!input) return;
+  input.addEventListener("input", () => {
+    clienteSeleccionado = null;
+    setClientLookupUI();
+    window.clearTimeout(clientLookupDebounce);
+    clientLookupDebounce = window.setTimeout(() => {
+      validarRutClienteEnUI({ silencioso: true });
+    }, 320);
+  });
+  input.addEventListener("blur", () => {
+    window.clearTimeout(clientLookupDebounce);
+    validarRutClienteEnUI();
+  });
+}
+
+function construirPayloadCotizacion(cliente) {
   const createdAtIso = new Date().toISOString();
   const quoteId = (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function")
     ? globalThis.crypto.randomUUID()
@@ -640,7 +772,9 @@ function construirPayloadCotizacion(nombreTienda) {
   return {
     quote: {
       id: quoteId,
-      store_name: nombreTienda,
+      store_name: cliente?.razon_social || "",
+      client_rut: cliente?.rut || cliente?.rut_normalized || null,
+      client_rut_normalized: cliente?.rut_normalized || normalizarRut(cliente?.rut || ""),
       total_items: totalItems,
       created_at_client: createdAtIso,
       source: "web",
@@ -649,12 +783,12 @@ function construirPayloadCotizacion(nombreTienda) {
   };
 }
 
-async function guardarCotizacionSupabase(nombreTienda) {
+async function guardarCotizacionSupabase(cliente) {
   if (!supabaseConfigurado()) {
     throw new Error("Configura SUPABASE_URL y SUPABASE_ANON_KEY en script.js");
   }
 
-  const payload = construirPayloadCotizacion(nombreTienda);
+  const payload = construirPayloadCotizacion(cliente);
   if (!payload.items.length) throw new Error("No hay items para guardar");
 
   const headers = {
@@ -968,13 +1102,16 @@ function configurarPanelCotizaciones() {
 function limpiarCarrito() {
   pedido = [];
   actualizarCarrito();
-  document.getElementById("userName").value = "";
+  const rutEl = document.getElementById("clientRut");
+  if (rutEl) rutEl.value = "";
+  clienteSeleccionado = null;
+  setClientLookupUI();
   document.getElementById("cartSidebar").classList.remove("open");
 }
 
 document.getElementById("sendRequest").onclick = async () => {
-  const nombreTienda = document.getElementById("userName").value.trim();
-  if (!nombreTienda) return alert("Ingresa el nombre de tu tienda");
+  const cliente = clienteSeleccionado || await validarRutClienteEnUI();
+  if (!cliente) return alert("Ingresa un RUT válido registrado");
   if (!pedido.length) return alert("Tu pedido esta vacio");
 
   const btn = document.getElementById("sendRequest");
@@ -983,11 +1120,11 @@ document.getElementById("sendRequest").onclick = async () => {
   btn.innerText = "Guardando...";
 
   try {
-    const quoteId = await guardarCotizacionSupabase(nombreTienda);
+    const quoteId = await guardarCotizacionSupabase(cliente);
 
     const csv = generarCSV();
     if (csv) {
-      const safe = nombreTienda.replace(/\s+/g, "_");
+      const safe = (cliente.razon_social || "cliente").replace(/\s+/g, "_");
       descargarArchivo(`cotizacion_${safe}_${Date.now()}.csv`, csv, "text/csv;charset=utf-8;");
     }
 
@@ -1002,6 +1139,7 @@ document.getElementById("sendRequest").onclick = async () => {
   }
 };
 configurarInputsTallas();
+configurarLookupCliente();
 configurarPanelCotizaciones();
 
 document.getElementById("closeCart").onclick = () => {

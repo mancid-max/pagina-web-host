@@ -441,6 +441,21 @@ box-shadow: inset 0 0 0 1px rgba(255,0,140,0.12);
   letter-spacing: .2px;
 }
 
+.sizes-panel{
+  border:1px solid rgba(0,0,0,0.08);
+  border-radius:14px;
+  padding:10px;
+  background:
+    radial-gradient(140% 140% at 0% 0%, rgba(120,210,235,0.08), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,0.86), rgba(246,250,253,0.9));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 10px 20px rgba(15,23,42,0.04);
+}
+
+.sizes-panel .sizes-divider{
+  margin-top:0;
+  margin-bottom:10px;
+}
+
 .sizes{
 display:grid;
 grid-template-columns:repeat(3,minmax(0,1fr));
@@ -1184,6 +1199,64 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
   .logo img{
     height: 34px;
   }
+}
+
+.cart-field-label{
+  display:block;
+  margin-top:2px;
+  margin-bottom:6px;
+  font-size:12px;
+  font-weight:700;
+  color:#475569;
+  letter-spacing:.2px;
+}
+
+#clientRut{
+  width:100%;
+  margin-top:0;
+  padding:12px 14px;
+  border-radius:14px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: rgba(255,255,255,0.75);
+  font-size:14px;
+  outline:none;
+  transition: box-shadow .2s ease, border-color .2s ease;
+}
+
+#clientRut:focus{
+  border-color: rgba(177,0,99,0.6);
+  box-shadow: 0 0 0 4px rgba(177,0,99,0.12);
+}
+
+.client-lookup-badge{
+  margin-top:8px;
+  padding:9px 11px;
+  border-radius:12px;
+  border:1px solid rgba(16,185,129,0.16);
+  background: linear-gradient(180deg, rgba(236,253,245,0.95), rgba(240,253,250,0.95));
+  color:#065f46;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.35;
+}
+
+.client-lookup-msg{
+  min-height:18px;
+  margin-top:6px;
+  font-size:12px;
+  color:#64748b;
+}
+
+.client-lookup-msg.loading{ color:#475569; }
+.client-lookup-msg.ok{ color:#047857; font-weight:600; }
+.client-lookup-msg.error{ color:#b91c1c; font-weight:700; }
+.client-lookup-msg.shake{ animation: shakeX .28s ease; }
+
+@keyframes shakeX{
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
 }
 
 @media (max-width:900px){
