@@ -281,8 +281,8 @@ function renderGrid(lista) {
     .map(
       (p) => `
       <div class="card" data-family="${p.family}" onclick="verProducto('${p.family}')">
+        <div class="card-title">Modelo ${p.family}</div>
         <img src="${withCacheBust(p.main_image)}" alt="Modelo ${p.family}">
-        <div>Modelo ${p.family}</div>
       </div>
     `
     )
@@ -545,11 +545,12 @@ function pad2(n) {
 
 function generarCodigoCotizacionVisual(q) {
   if (!q) return "COT-";
-  const d = q.created_at ? new Date(q.created_at) : new Date();
-  const fecha = `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}`;
-  const hora = `${pad2(d.getHours())}${pad2(d.getMinutes())}`;
-  const tail = String(q.id || "").replace(/-/g, "").slice(0, 6).toUpperCase();
-  return `COT-${fecha}-${hora}-${tail || "000000"}`;
+  const raw = String(q.id || "").replace(/-/g, "");
+  let acc = 0;
+  for (let i = 0; i < raw.length; i++) {
+    acc = (acc * 31 + raw.charCodeAt(i)) % 100000;
+  }
+  return `COT-${String(acc).padStart(5, "0")}`;
 }
 
 function generarCSVQuoteAdmin(quote, items = []) {
@@ -785,7 +786,7 @@ function renderCotizacionesAdmin(quotes = [], items = []) {
             <div class="quote-card-title">${q.store_name || "Sin tienda"}</div>
             <div class="quote-code-row">
               <span class="quote-code-pill">${codigo}</span>
-              <button type="button" class="ghost-btn quote-export-btn" data-quote-export="${q.id}">Excel</button>
+              <button type="button" class="ghost-btn quote-export-btn" data-quote-export="${q.id}">Descargar</button>
             </div>
             <div class="quote-meta">ID interno: ${q.id}</div>
           </div>

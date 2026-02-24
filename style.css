@@ -135,6 +135,13 @@ color:#666;
   flex-direction:column;     /* ✅ */
 }
 
+.card-title{
+padding:16px 18px 10px;
+font-weight:700;
+text-align:center;
+letter-spacing:-0.2px;
+}
+
 .card .img-wrap{
   height: 520px;             /* ✅ ajusta: 480–600 */
   display:flex;
@@ -155,7 +162,8 @@ color:#666;
   object-fit: contain;
   object-position: center;
   background: #ffffff;
-  border-radius: 20px 20px 0 0;
+  border-radius: 14px;
+  margin: 0 14px 14px;
 }
 
 @media (max-width: 1100px){
@@ -165,15 +173,14 @@ color:#666;
 }
 
 @media (max-width: 650px){
-  .card img{
-    height:480px;
+  .card-title{
+    padding:14px 14px 8px;
+    font-size:15px;
   }
-}
-
-.card div{
-padding:20px;
-font-weight:600;
-text-align:center;
+  .card img{
+    height:460px;
+    margin: 0 12px 12px;
+  }
 }
 
 /* MODAL */
@@ -1162,6 +1169,15 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
     flex:1;
   }
 
+  .quote-code-row{
+    align-items:stretch;
+  }
+
+  .quote-export-btn{
+    width:100%;
+    justify-content:center;
+  }
+
   .success-toast{
     top:14px;
     border-radius:14px;
@@ -1321,5 +1337,102 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
   .modal .thumbnails::-webkit-scrollbar-thumb{
     background: rgba(0,0,0,0.15);
     border-radius: 999px;
+  }
+}
+
+/* Ajustes finos SOLO movil para modal (sin tocar escritorio) */
+@media (max-width: 640px){
+  .modal-content{
+    width: 96%;
+    height: 94vh !important;
+    border-radius: 16px;
+  }
+
+  .modal-left{
+    height: 48vh !important;
+    min-height: 260px !important;
+    padding: 10px 10px 6px !important;
+    gap: 8px;
+  }
+
+  .image-viewer{
+    padding: 8px;
+    border-radius: 14px;
+  }
+
+  .thumbnails{
+    min-height: 88px !important;
+    gap: 8px !important;
+    padding: 0 2px 6px !important;
+  }
+
+  .thumbnails img,
+  .modal .thumbnails img{
+    width: 54px !important;
+    height: 72px !important;
+    border-radius: 10px;
+    padding: 2px;
+  }
+
+  .modal-right{
+    padding: 12px 12px 16px !important;
+    gap: 10px;
+  }
+
+  .modal-right h2{
+    font-size: 24px;
+    margin-bottom: 2px;
+  }
+
+  .product-description{
+    font-size: 13px;
+    line-height: 1.55;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .product-characteristics{
+    padding: 8px 8px;
+    border-radius: 12px;
+  }
+
+  .product-characteristics li{
+    font-size: 12.5px;
+    line-height: 1.35;
+    padding: 8px 8px 8px 26px;
+    margin: 6px 0;
+    border-radius: 10px;
+  }
+
+  .product-characteristics li:before{
+    left: 8px;
+    top: 8px;
+    width: 12px;
+    height: 12px;
+    font-size: 10px;
+  }
+
+  .sizes{
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .sizes label{
+    padding: 8px 8px 8px 10px;
+    font-size: 11px;
+    border-radius: 9px;
+  }
+
+  .sizes input{
+    width: 40px;
+    padding: 4px 2px;
+    font-size: 12px;
+  }
+
+  #addBtn{
+    padding: 13px;
+    border-radius: 10px;
+    font-size: 14px;
+    bottom: 6px;
   }
 }
