@@ -4,7 +4,7 @@
 let productos = [];
 let pedido = [];
 let skuActivo = "";
-let draftTallasPorSku = {}; // { "4204": {38:2,40:1}, "4204-02": {...} }
+let draftTallasPorSku = {}; // legacy (borradores desactivados)
 const TALLAS_DISPONIBLES = ["36", "38", "40", "42", "44", "46"];
 let quotesAccessToken = sessionStorage.getItem("quotes_access_token") || "";
 let quotesUserEmail = sessionStorage.getItem("quotes_user_email") || "";
@@ -108,12 +108,13 @@ function escribirTallasUI(tallas = {}) {
 }
 
 function guardarDraftDelSkuActual() {
-  if (!skuActivo) return;
-  draftTallasPorSku[skuActivo] = leerTallasUI();
+  // Borradores desactivados: no persistir cantidades al cambiar de modelo/variante
+  return;
 }
 
 function cargarDraftDelSku(sku) {
-  escribirTallasUI(draftTallasPorSku[sku] || {});
+  // Siempre iniciar limpio para evitar autocompletar cantidades previas
+  escribirTallasUI({});
 }
 
 function resetDraftsModal() {
@@ -404,27 +405,23 @@ document.getElementById("modal").onclick = (e) => {
  * AGREGAR AL PEDIDO
  ***********************/
 document.getElementById("addBtn").onclick = () => {
-  // 1) guardar lo que hay en pantalla en el SKU activo
-  guardarDraftDelSkuActual();
-
-  // 2) recorrer todos los drafts y agregar los que tengan cantidades
+  // Tomar solo lo visible en pantalla para el SKU activo (sin borradores)
+  const tallas = leerTallasUI();
+  const total = Object.values(tallas).reduce((a, b) => a + b, 0);
   let agregoAlgo = false;
 
-  for (const [sku, tallas] of Object.entries(draftTallasPorSku)) {
-    const total = Object.values(tallas).reduce((a, b) => a + b, 0);
-    if (total > 0) {
-      const existente = pedido.find((item) => item.sku === sku);
-      if (existente) {
-        Object.entries(tallas).forEach(([talla, cantidad]) => {
-          const qty = Number(cantidad) || 0;
-          if (qty <= 0) return;
-          existente.tallas[talla] = (Number(existente.tallas[talla]) || 0) + qty;
-        });
-      } else {
-        pedido.push({ sku, tallas: { ...tallas } });
-      }
-      agregoAlgo = true;
+  if (skuActivo && total > 0) {
+    const existente = pedido.find((item) => item.sku === skuActivo);
+    if (existente) {
+      Object.entries(tallas).forEach(([talla, cantidad]) => {
+        const qty = Number(cantidad) || 0;
+        if (qty <= 0) return;
+        existente.tallas[talla] = (Number(existente.tallas[talla]) || 0) + qty;
+      });
+    } else {
+      pedido.push({ sku: skuActivo, tallas: { ...tallas } });
     }
+    agregoAlgo = true;
   }
 
   if (!agregoAlgo) {
@@ -432,7 +429,7 @@ document.getElementById("addBtn").onclick = () => {
     return;
   }
 
-  // 3) limpiar drafts + inputs
+  // 3) limpiar inputs
   resetDraftsModal();
 
   actualizarCarrito();
