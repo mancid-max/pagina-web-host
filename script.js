@@ -538,6 +538,21 @@ function descargarArchivo(nombre, contenido, mime) {
   URL.revokeObjectURL(url);
 }
 
+function mostrarToastExito() {
+  const toast = document.getElementById("successToast");
+  if (!toast) return;
+  toast.hidden = false;
+  toast.classList.remove("show");
+  // Reinicia animacion
+  void toast.offsetWidth;
+  toast.classList.add("show");
+  window.clearTimeout(mostrarToastExito._timer);
+  mostrarToastExito._timer = window.setTimeout(() => {
+    toast.classList.remove("show");
+    toast.hidden = true;
+  }, 3300);
+}
+
 function construirPayloadCotizacion(nombreTienda) {
   const createdAtIso = new Date().toISOString();
   const quoteId = (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function")
@@ -898,7 +913,7 @@ document.getElementById("sendRequest").onclick = async () => {
       descargarArchivo(`cotizacion_${safe}_${Date.now()}.csv`, csv, "text/csv;charset=utf-8;");
     }
 
-    alert(`Cotizacion guardada correctamente (ID: ${quoteId})`);
+    mostrarToastExito();
     limpiarCarrito();
   } catch (error) {
     console.error(error);
