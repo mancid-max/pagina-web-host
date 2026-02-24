@@ -143,13 +143,49 @@ function configurarInputsTallas() {
 
 function inicializarBuscadorModelos() {
   const input = document.getElementById("modelSearchInput");
-  const datalist = document.getElementById("modelSuggestions");
+  const panel = document.getElementById("modelSuggestionsPanel");
   const btnBuscar = document.getElementById("modelSearchBtn");
   const btnLimpiar = document.getElementById("modelSearchClear");
-  if (!input || !datalist || !btnBuscar || !btnLimpiar) return;
+  if (!input || !panel || !btnBuscar || !btnLimpiar) return;
 
   const modelos = [...new Set(productos.map((p) => String(p.family)).filter(Boolean))].sort();
-  datalist.innerHTML = modelos.map((m) => `<option value="${m}"></option>`).join("");
+  let sugerenciasActuales = [];
+  let activeIndex = -1;
+
+  const hideSuggestions = () => {
+    panel.hidden = true;
+    panel.innerHTML = "";
+    sugerenciasActuales = [];
+    activeIndex = -1;
+  };
+
+  const showSuggestions = (term) => {
+    const query = (term || "").trim();
+    if (!query) {
+      hideSuggestions();
+      return;
+    }
+
+    sugerenciasActuales = modelos.filter((m) => m.includes(query)).slice(0, 8);
+    activeIndex = -1;
+
+    if (!sugerenciasActuales.length) {
+      panel.innerHTML = `<div class="model-suggestion-empty">No hay coincidencias</div>`;
+      panel.hidden = false;
+      return;
+    }
+
+    panel.innerHTML = sugerenciasActuales
+      .map((m, idx) => `<button type="button" class="model-suggestion-item" data-model="${m}" data-index="${idx}">Modelo ${m}</button>`)
+      .join("");
+    panel.hidden = false;
+  };
+
+  const paintActive = () => {
+    panel.querySelectorAll(".model-suggestion-item").forEach((el, idx) => {
+      el.classList.toggle("active", idx === activeIndex);
+    });
+  };
 
   const filtrarGrid = (term) => {
     if (!term) {
@@ -163,32 +199,74 @@ function inicializarBuscadorModelos() {
     const term = input.value.trim();
     if (!term) {
       renderGrid(productos);
+      hideSuggestions();
       return;
     }
 
     const exacto = productos.find((p) => String(p.family) === term);
     if (exacto) {
       renderGrid(productos);
+      hideSuggestions();
       setTimeout(() => verProducto(exacto.family), 0);
       return;
     }
 
     filtrarGrid(term);
+    hideSuggestions();
   };
 
-  input.addEventListener("input", () => filtrarGrid(input.value.trim()));
+  input.addEventListener("input", () => {
+    const term = input.value.trim();
+    filtrarGrid(term);
+    showSuggestions(term);
+  });
+
   input.addEventListener("keydown", (e) => {
+    if (!panel.hidden && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      if (!sugerenciasActuales.length) return;
+      e.preventDefault();
+      if (e.key === "ArrowDown") {
+        activeIndex = (activeIndex + 1) % sugerenciasActuales.length;
+      } else {
+        activeIndex = activeIndex <= 0 ? sugerenciasActuales.length - 1 : activeIndex - 1;
+      }
+      paintActive();
+      return;
+    }
+
+    if (e.key === "Enter" && !panel.hidden && activeIndex >= 0 && sugerenciasActuales[activeIndex]) {
+      e.preventDefault();
+      input.value = sugerenciasActuales[activeIndex];
+      buscarModelo();
+      return;
+    }
+
     if (e.key === "Enter") {
       e.preventDefault();
       buscarModelo();
     }
+
+    if (e.key === "Escape") hideSuggestions();
   });
 
   btnBuscar.addEventListener("click", buscarModelo);
   btnLimpiar.addEventListener("click", () => {
     input.value = "";
     renderGrid(productos);
+    hideSuggestions();
     input.focus();
+  });
+
+  panel.addEventListener("click", (e) => {
+    const btn = e.target.closest(".model-suggestion-item");
+    if (!btn) return;
+    input.value = btn.dataset.model || "";
+    buscarModelo();
+  });
+
+  document.addEventListener("click", (e) => {
+    const box = document.querySelector(".model-search-box");
+    if (!box?.contains(e.target)) hideSuggestions();
   });
 }
 
@@ -616,14 +694,24 @@ function renderCotizacionesAdmin(quotes = [], items = []) {
       return String(a.size).localeCompare(String(b.size), undefined, { numeric: true });
     });
     const fecha = q.created_at ? new Date(q.created_at).toLocaleString() : "-";
+    const isReady = !!q.is_ready;
     return `
-      <div class="quote-card">
+      <div class="quote-card" data-quote-id="${q.id}">
         <div class="quote-card-head">
           <div>
             <div class="quote-card-title">${q.store_name || "Sin tienda"}</div>
             <div class="quote-meta">ID: ${q.id}</div>
           </div>
           <div class="quote-meta">Total items: ${q.total_items || 0}<br>${fecha}</div>
+        </div>
+        <div class="quote-status">
+          <div class="quote-status-text ${isReady ? "ready" : ""}">
+            ${isReady ? "Cotización lista" : "En proceso"}
+          </div>
+          <label class="quote-status-toggle">
+            <input type="checkbox" class="quote-ready-checkbox" data-quote-id="${q.id}" ${isReady ? "checked" : ""}>
+            Cotización lista
+          </label>
         </div>
         <div class="quote-items-grid">
           ${detalles.length
@@ -636,6 +724,28 @@ function renderCotizacionesAdmin(quotes = [], items = []) {
   }).join("");
 }
 
+async function actualizarEstadoCotizacion(quoteId, isReady) {
+  if (!quotesAccessToken) throw new Error("Debes iniciar sesion");
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/quotes?id=eq.${quoteId}`, {
+    method: "PATCH",
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${quotesAccessToken}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+    },
+    body: JSON.stringify({
+      is_ready: !!isReady,
+      ready_at: isReady ? new Date().toISOString() : null,
+    }),
+  });
+
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`No se pudo actualizar estado: ${txt || res.status}`);
+  }
+}
+
 async function cargarCotizacionesAdmin() {
   if (!quotesAccessToken) throw new Error("Debes iniciar sesion");
 
@@ -645,7 +755,7 @@ async function cargarCotizacionesAdmin() {
   };
 
   const quotesRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/quotes?select=id,store_name,total_items,created_at,created_at_client,source&order=created_at.desc&limit=50`,
+    `${SUPABASE_URL}/rest/v1/quotes?select=id,store_name,total_items,created_at,created_at_client,source,is_ready,ready_at&order=created_at.desc&limit=50`,
     { headers }
   );
 
@@ -700,6 +810,7 @@ function configurarPanelCotizaciones() {
   const btnLogout = document.getElementById("logoutQuotesBtn");
   const emailEl = document.getElementById("quotesEmail");
   const passEl = document.getElementById("quotesPassword");
+  const quotesListEl = document.getElementById("quotesList");
 
   actualizarEstadoQuotesUI("");
 
@@ -742,6 +853,23 @@ function configurarPanelCotizaciones() {
   });
 
   btnLogout?.addEventListener("click", logoutCotizaciones);
+
+  quotesListEl?.addEventListener("change", async (e) => {
+    const checkbox = e.target.closest(".quote-ready-checkbox");
+    if (!checkbox) return;
+    const quoteId = checkbox.dataset.quoteId;
+    const checked = !!checkbox.checked;
+    checkbox.disabled = true;
+    try {
+      await actualizarEstadoCotizacion(quoteId, checked);
+      await cargarCotizacionesAdmin();
+    } catch (err) {
+      checkbox.checked = !checked;
+      actualizarEstadoQuotesUI(err.message || "No se pudo actualizar estado");
+    } finally {
+      checkbox.disabled = false;
+    }
+  });
 }
 
 function limpiarCarrito() {

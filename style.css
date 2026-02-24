@@ -556,6 +556,11 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
   align-items:center;
 }
 
+.model-search-box{
+  position:relative;
+  min-width:0;
+}
+
 .model-search input{
   width:100%;
   padding:13px 14px;
@@ -569,6 +574,50 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
 .model-search input:focus{
   border-color:#111;
   box-shadow: 0 0 0 4px rgba(17,17,17,0.07);
+}
+
+.model-suggestions-panel{
+  position:absolute;
+  top: calc(100% + 8px);
+  left:0;
+  right:0;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(10px);
+  border:1px solid rgba(0,0,0,0.08);
+  border-radius:14px;
+  box-shadow: 0 18px 36px rgba(15,23,42,0.12);
+  overflow:hidden;
+  z-index:30;
+  transform-origin: top;
+  animation: suggestDrop 160ms ease-out;
+}
+
+@keyframes suggestDrop{
+  from { opacity:0; transform: translateY(-4px) scaleY(.96); }
+  to { opacity:1; transform: translateY(0) scaleY(1); }
+}
+
+.model-suggestion-item{
+  width:100%;
+  text-align:left;
+  border:none;
+  background:transparent;
+  padding:11px 14px;
+  cursor:pointer;
+  font-weight:600;
+  color:#1f2937;
+  transition: background-color .12s ease;
+}
+
+.model-suggestion-item:hover,
+.model-suggestion-item.active{
+  background: rgba(17,17,17,0.05);
+}
+
+.model-suggestion-empty{
+  padding:11px 14px;
+  color:#6b7280;
+  font-size:13px;
 }
 
 .model-search #modelSearchBtn{
@@ -704,6 +753,43 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
 
 .quote-card-title{
   font-weight:800;
+}
+
+.quote-status{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin: 10px 0 8px;
+  border:1px solid rgba(0,0,0,0.06);
+  background:#f8fafc;
+  border-radius:12px;
+  padding:10px 12px;
+}
+
+.quote-status-text{
+  font-size:13px;
+  font-weight:700;
+  color:#475569;
+}
+
+.quote-status-text.ready{
+  color:#065f46;
+}
+
+.quote-status-toggle{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:13px;
+  color:#374151;
+  font-weight:600;
+}
+
+.quote-status-toggle input{
+  width:16px;
+  height:16px;
+  accent-color:#111;
 }
 
 .quote-meta{

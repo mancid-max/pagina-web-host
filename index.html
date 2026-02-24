@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mohicano</title>
+<link rel="icon" type="image/png" href="Imagenes/Logo/Logo.png">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -26,8 +27,10 @@
   <h1 class="hero-title">Nueva Colección</h1>
   <p class="hero-sub">Diseño moderno. Calidad premium.</p>
   <div class="model-search">
-    <input id="modelSearchInput" list="modelSuggestions" type="text" inputmode="numeric" placeholder="Buscar modelo (ej: 4206)">
-    <datalist id="modelSuggestions"></datalist>
+    <div class="model-search-box">
+      <input id="modelSearchInput" type="text" inputmode="numeric" autocomplete="off" placeholder="Buscar modelo (ej: 4206)">
+      <div id="modelSuggestionsPanel" class="model-suggestions-panel" hidden></div>
+    </div>
     <button id="modelSearchBtn" type="button">Buscar</button>
     <button id="modelSearchClear" type="button" class="ghost-btn">Limpiar</button>
   </div>
