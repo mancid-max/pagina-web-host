@@ -107,6 +107,12 @@ function cargarDraftDelSku(sku) {
   escribirTallasUI(draftTallasPorSku[sku] || {});
 }
 
+function resetDraftsModal() {
+  draftTallasPorSku = {};
+  skuActivo = "";
+  escribirTallasUI({});
+}
+
 /***********************
  * GRID
  ***********************/
@@ -131,7 +137,8 @@ function verProducto(familyId) {
   const p = productos.find((item) => item.family === familyId);
   if (!p) return;
 
-  // reinicia drafts para este modal (si quieres conservar entre aperturas, quita esta línea)
+  // Reinicia drafts para evitar re-agregar items viejos al volver a abrir el modal
+  resetDraftsModal();
   document.getElementById("modalTitle").innerText = "Modelo " + p.family;
   
   // Mostrar descripción y características
@@ -260,7 +267,7 @@ document.getElementById("addBtn").onclick = () => {
   }
 
   // 3) limpiar drafts + inputs
-  escribirTallasUI({});
+  resetDraftsModal();
 
   actualizarCarrito();
   document.getElementById("modal").classList.remove("active");
