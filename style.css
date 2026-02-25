@@ -739,9 +739,12 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
 }
 
 .quotes-modal-content{
-  max-width: 980px;
+  width: min(900px, 88vw);
+  max-width: 900px;
   grid-template-columns: 1fr;
-  height: min(88vh, 760px);
+  height: min(76vh, 680px);
+  margin: auto;
+  border-radius: 20px;
 }
 
 .quotes-admin{
