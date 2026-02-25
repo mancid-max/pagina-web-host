@@ -59,6 +59,7 @@
 
     <div class="modal-left">
         <div class="image-viewer">
+            <button id="openImageGalleryBtn" class="image-gallery-btn" type="button">Ver imágenes</button>
             <img id="viewerImg">
         </div>
         <div id="thumbContainer" class="thumbnails"></div>
@@ -84,6 +85,18 @@
         <button id="addBtn">Agregar cotización</button>
     </div>
 
+  </div>
+</div>
+
+<!-- VISOR AMPLIADO DE IMAGENES -->
+<div id="imageZoomModal" class="image-zoom-modal" hidden>
+  <div class="image-zoom-backdrop" data-close-image-zoom></div>
+  <div class="image-zoom-content" role="dialog" aria-modal="true" aria-label="Visor de imágenes">
+    <button id="closeImageZoomBtn" class="image-zoom-close" type="button" aria-label="Cerrar visor">×</button>
+    <div class="image-zoom-stage">
+      <img id="imageZoomMain" alt="Vista ampliada de producto">
+    </div>
+    <div id="imageZoomThumbs" class="image-zoom-thumbs"></div>
   </div>
 </div>
 

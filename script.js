@@ -11,6 +11,8 @@ let quotesUserEmail = sessionStorage.getItem("quotes_user_email") || "";
 let quotesAdminCache = { quotes: [], itemsByQuote: new Map() };
 let clienteSeleccionado = null; // { rut, rut_normalized, razon_social }
 let clientLookupDebounce = null;
+let imagenesModalActual = [];
+let imagenModalIndex = 0;
 
 const ASSET_VERSION = Date.now();
 
@@ -81,8 +83,12 @@ function buildImageList(obj) {
 function renderImages(imageList) {
   const viewer = document.getElementById("viewerImg");
   const thumbContainer = document.getElementById("thumbContainer");
+  const galleryBtn = document.getElementById("openImageGalleryBtn");
 
   thumbContainer.innerHTML = "";
+  imagenesModalActual = Array.isArray(imageList) ? [...imageList] : [];
+  imagenModalIndex = 0;
+  if (galleryBtn) galleryBtn.hidden = !imagenesModalActual.length;
 
   if (!imageList || !imageList.length) {
     viewer.src = "";
@@ -98,6 +104,7 @@ function renderImages(imageList) {
 
     thumb.onclick = () => {
       viewer.src = withCacheBust(imgSrc);
+      imagenModalIndex = index;
       // limpia active
       thumbContainer.querySelectorAll("img").forEach((t) => t.classList.remove("active-thumb"));
       thumb.classList.add("active-thumb");
@@ -131,6 +138,52 @@ function escribirTallasUI(tallas = {}) {
     if (!el) return;
     el.value = tallas[t] ? String(tallas[t]) : "";
   });
+}
+
+function renderZoomGallery() {
+  const zoomMain = document.getElementById("imageZoomMain");
+  const zoomThumbs = document.getElementById("imageZoomThumbs");
+  if (!zoomMain || !zoomThumbs) return;
+
+  zoomThumbs.innerHTML = "";
+
+  if (!imagenesModalActual.length) {
+    zoomMain.src = "";
+    return;
+  }
+
+  if (imagenModalIndex < 0 || imagenModalIndex >= imagenesModalActual.length) {
+    imagenModalIndex = 0;
+  }
+
+  zoomMain.src = withCacheBust(imagenesModalActual[imagenModalIndex]);
+
+  imagenesModalActual.forEach((imgSrc, index) => {
+    const thumb = document.createElement("img");
+    thumb.src = withCacheBust(imgSrc);
+    thumb.alt = `Vista ${index + 1}`;
+    if (index === imagenModalIndex) thumb.classList.add("active-thumb");
+    thumb.onclick = () => {
+      imagenModalIndex = index;
+      renderZoomGallery();
+    };
+    zoomThumbs.appendChild(thumb);
+  });
+}
+
+function abrirVisorImagenes() {
+  const zoomModal = document.getElementById("imageZoomModal");
+  if (!zoomModal || !imagenesModalActual.length) return;
+  renderZoomGallery();
+  zoomModal.hidden = false;
+  document.body.classList.add("image-zoom-open");
+}
+
+function cerrarVisorImagenes() {
+  const zoomModal = document.getElementById("imageZoomModal");
+  if (!zoomModal) return;
+  zoomModal.hidden = true;
+  document.body.classList.remove("image-zoom-open");
 }
 
 function guardarDraftDelSkuActual() {
@@ -411,6 +464,9 @@ function verProducto(familyId) {
   cargarDraftDelSku(skuActivo);
   setActive(initialBtn || btnFamily);
 
+  const modalRight = document.querySelector("#modal .modal-right");
+  if (modalRight) modalRight.scrollTop = 0;
+
   document.getElementById("modal").classList.add("active");
 }
 
@@ -419,13 +475,24 @@ function verProducto(familyId) {
  ***********************/
 document.getElementById("closeModal").onclick = () => {
   document.getElementById("modal").classList.remove("active");
+  cerrarVisorImagenes();
 };
 
 document.getElementById("modal").onclick = (e) => {
   if (e.target.id === "modal") {
     document.getElementById("modal").classList.remove("active");
+    cerrarVisorImagenes();
   }
 };
+
+document.getElementById("openImageGalleryBtn")?.addEventListener("click", abrirVisorImagenes);
+document.getElementById("closeImageZoomBtn")?.addEventListener("click", cerrarVisorImagenes);
+document.getElementById("imageZoomModal")?.addEventListener("click", (e) => {
+  if (e.target.dataset.closeImageZoom !== undefined) cerrarVisorImagenes();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") cerrarVisorImagenes();
+});
 
 /***********************
  * AGREGAR AL PEDIDO
