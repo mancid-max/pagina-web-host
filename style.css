@@ -1884,3 +1884,61 @@ body{
 .success-toast-text strong{
   color: var(--mh-red-dark);
 }
+
+/* Ajuste fino header + ADMIN hover visible */
+.header{
+  padding: 10px 16px;
+}
+
+.logo{
+  padding: 4px 7px;
+  border-radius: 11px;
+}
+
+.logo img{
+  height: 32px;
+}
+
+.header-actions{
+  gap: 8px;
+}
+
+.ghost-btn{
+  padding: 7px 11px;
+  border-radius: 10px;
+}
+
+.admin-btn,
+.admin-btn:hover,
+.admin-btn:focus-visible{
+  color:#fff !important;
+}
+
+.admin-btn:hover{
+  background:
+    radial-gradient(120% 140% at 20% 10%, rgba(215,25,32,0.16), transparent 55%),
+    linear-gradient(180deg, #23262d 0%, #13151a 100%);
+}
+
+.cart-btn{
+  padding: 7px 12px;
+  border-radius: 12px;
+  min-width: 60px;
+}
+
+@media (max-width:768px){
+  .header{
+    padding:10px 12px;
+  }
+  .logo img{
+    height: 28px;
+  }
+  .ghost-btn{
+    padding:6px 9px;
+    font-size:12px;
+  }
+  .cart-btn{
+    padding:6px 10px;
+    min-width: 54px;
+  }
+}
