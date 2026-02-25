@@ -360,7 +360,7 @@ function verProducto(familyId) {
   // 1) Botón Familia
   const btnFamily = document.createElement("button");
   btnFamily.className = "variant-btn";
-  btnFamily.innerText = "Familia " + p.family;
+  btnFamily.innerText = "Modelo " + p.family;
   const botonesPorSku = {};
 
   btnFamily.onclick = () => {
