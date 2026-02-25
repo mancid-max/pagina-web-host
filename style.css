@@ -1020,6 +1020,23 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
   animation: toastInOut 3.2s cubic-bezier(.2,.8,.2,1) forwards;
 }
 
+.error-toast{
+  border-color: rgba(220,38,38,0.22);
+  background:
+    radial-gradient(120% 180% at 0% 0%, rgba(220,38,38,0.10), transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(253,248,248,0.98));
+  box-shadow: 0 18px 40px rgba(127,29,29,0.12);
+}
+
+.error-toast .success-toast-icon{
+  background: linear-gradient(180deg, #ef4444, #b91c1c);
+  box-shadow: 0 8px 18px rgba(220,38,38,0.22);
+}
+
+.error-toast .success-toast-text strong{
+  color:#991b1b;
+}
+
 .success-toast-icon{
   width:34px;
   height:34px;

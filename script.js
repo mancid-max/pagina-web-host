@@ -647,6 +647,24 @@ function mostrarToastExito() {
   }, 3300);
 }
 
+function mostrarToastError(titulo, mensaje) {
+  const toast = document.getElementById("errorToast");
+  const titleEl = document.getElementById("errorToastTitle");
+  const msgEl = document.getElementById("errorToastMsg");
+  if (!toast) return;
+  if (titleEl) titleEl.innerText = titulo || "Revisa los datos";
+  if (msgEl) msgEl.innerText = mensaje || "Hay un problema con la informacion ingresada.";
+  toast.hidden = false;
+  toast.classList.remove("show");
+  void toast.offsetWidth;
+  toast.classList.add("show");
+  window.clearTimeout(mostrarToastError._timer);
+  mostrarToastError._timer = window.setTimeout(() => {
+    toast.classList.remove("show");
+    toast.hidden = true;
+  }, 3300);
+}
+
 function setClientLookupUI({ tipo = "", texto = "", badge = "" } = {}) {
   const msgEl = document.getElementById("clientLookupMsg");
   const badgeEl = document.getElementById("clientLookupBadge");
@@ -1138,7 +1156,7 @@ function limpiarCarrito() {
 
 document.getElementById("sendRequest").onclick = async () => {
   const cliente = clienteSeleccionado || await validarRutClienteEnUI();
-  if (!cliente) return alert("Ingresa un RUT válido registrado");
+  if (!cliente) return mostrarToastError("RUT no valido", "Ingresa un RUT registrado para enviar la cotizacion.");
   if (!pedido.length) return alert("Tu pedido esta vacio");
 
   const btn = document.getElementById("sendRequest");
@@ -1147,13 +1165,7 @@ document.getElementById("sendRequest").onclick = async () => {
   btn.innerText = "Guardando...";
 
   try {
-    const quoteId = await guardarCotizacionSupabase(cliente);
-
-    const csv = generarCSV();
-    if (csv) {
-      const safe = (cliente.razon_social || "cliente").replace(/\s+/g, "_");
-      descargarArchivo(`cotizacion_${safe}_${Date.now()}.csv`, csv, "text/csv;charset=utf-8;");
-    }
+    await guardarCotizacionSupabase(cliente);
 
     mostrarToastExito();
     limpiarCarrito();
