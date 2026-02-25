@@ -875,6 +875,8 @@ function actualizarEstadoQuotesUI(msg = "") {
   const msgEl = document.getElementById("quotesLoginMsg");
   const refreshBtn = document.getElementById("refreshQuotesBtn");
   const logoutBtn = document.getElementById("logoutQuotesBtn");
+  const quotesModalContent = document.querySelector("#quotesModal .quotes-modal-content");
+  const quotesAdminWrap = document.querySelector("#quotesModal .quotes-admin");
   const autenticado = !!quotesAccessToken;
 
   if (msgEl) msgEl.innerText = msg;
@@ -883,6 +885,8 @@ function actualizarEstadoQuotesUI(msg = "") {
   if (badge) badge.innerText = autenticado ? `Sesion: ${quotesUserEmail}` : "";
   if (refreshBtn) refreshBtn.style.display = autenticado ? "inline-flex" : "none";
   if (logoutBtn) logoutBtn.style.display = autenticado ? "inline-flex" : "none";
+  quotesModalContent?.classList.toggle("login-only", !autenticado);
+  quotesAdminWrap?.classList.toggle("login-only", !autenticado);
 }
 
 function agruparItemsPorQuote(items = []) {
