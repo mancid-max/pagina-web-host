@@ -17,8 +17,12 @@
     </div>
     <div class="header-actions">
         <button id="quotesAdminBtn" class="ghost-btn admin-btn" type="button">ADMIN</button>
-        <div id="cartToggle" class="cart-btn">
-            ðŸ›’ <span id="cartCount">0</span>
+        <div id="cartToggle" class="cart-btn" aria-label="Abrir tu cotización">
+            <span class="cart-btn-caption">Tu cotización</span>
+            <span class="cart-btn-main">
+              <span class="cart-btn-icon" aria-hidden="true">COT</span>
+              <span id="cartCount">0</span>
+            </span>
         </div>
     </div>
 </header>
@@ -149,3 +153,5 @@
 <script src="script.js?v=20260224z"></script>
 </body>
 </html>
+
+

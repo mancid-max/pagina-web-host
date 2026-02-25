@@ -11,8 +11,15 @@
       "Imagenes/4201/Mohicano0055.jpg",
       "Imagenes/4201/catalogo 42 _page-0004.jpg"
     ],
-    "description": "",
-    "characteristics": [],
+    "description": "Jeans Power Stretch tiro alto tobillero, confeccionado en denim de alta elasticidad con excelente recuperación, que se adapta al cuerpo sin deformarse con el uso. Su tela entrega firmeza en abdomen y cintura, manteniendo flexibilidad en movimiento. Incorpora bolsillos de corte curvo con tachas color níquel alto brillo que elevan el diseño con un acabado sofisticado. Cuenta con 3 pinzas estratégicas en el calce para potenciar el realce natural y detalle de cristal en el pasador como sello distintivo.",
+    "characteristics": [
+      "Tiro alto tobillero",
+      "Denim Power Stretch con excelente recuperación",
+      "Firmeza en abdomen y cintura con flexibilidad",
+      "Bolsillos curvos con tachas níquel alto brillo",
+      "3 pinzas estratégicas para realce",
+      "Cristal en pasador"
+    ],
     "variants": []
   },
   {
@@ -24,8 +31,15 @@
       "Imagenes/4206/Mohicano0186.jpg",
       "Imagenes/4206/Mohicano0196 copie.jpg"
     ],
-    "description": "",
-    "characteristics": [],
+    "description": "Jeans skinny Power Stretch confeccionado en denim tecnológico de compresión suave, que actúa como una segunda piel. Su tela combina elasticidad multidireccional y memoria estructural, permitiendo un ajuste preciso que estiliza sin incomodar. La aplicación de eco cuero en la pretina simula un cinturón incorporado, estructurando visualmente la silueta. Incorpora 3 pinzas en el calce para mayor realce y cristal en el pasador como detalle premium.",
+    "characteristics": [
+      "Calce skinny Power Stretch",
+      "Compresión suave tipo segunda piel",
+      "Elasticidad multidireccional con memoria estructural",
+      "Aplicación de eco cuero en pretina",
+      "3 pinzas para mayor realce",
+      "Cristal en pasador"
+    ],
     "variants": []
   },
   {
@@ -39,8 +53,15 @@
       "Imagenes/4209/Copia de CRI_8103.jpg",
       "Imagenes/4209/catalogo 42 _page-0045.jpg"
     ],
-    "description": "",
-    "characteristics": [],
+    "description": "Jeans Power Stretch con aplicaciones de eco cuero, elaborado en denim flexible de alto rendimiento que brinda ajuste anatómico y confort prolongado. Su tejido posee elasticidad controlada que acompaña el movimiento sin perder forma. Las aplicaciones de eco cuero en bolsillos y detalles delanteros aportan estructura y contraste visual. Incluye pinzas estratégicas para potenciar el realce del calce, logrando una silueta definida, cómoda y estilizada.",
+    "characteristics": [
+      "Denim flexible de alto rendimiento",
+      "Ajuste anatómico y confort prolongado",
+      "Elasticidad controlada con buena recuperación",
+      "Aplicaciones de eco cuero en bolsillos y frente",
+      "Contraste visual y estructura en diseño",
+      "Pinzas estratégicas para realce del calce"
+    ],
     "variants": []
   },
   {
@@ -53,8 +74,15 @@
       "Imagenes/4211/Mohicano0120 copie.jpg",
       "Imagenes/4211/Mohicano0121 copie.jpg"
     ],
-    "description": "",
-    "characteristics": [],
+    "description": "Jeans flare Perfect Fit, confeccionado en denim estructurado con elasticidad equilibrada que modela la figura manteniendo firmeza en caderas y muslos. Su composición permite una caída limpia desde la rodilla hacia abajo, logrando un flare elegante y alargador. El corte delantero reduce visualmente las caderas, mientras que los pasadores cubren las pinzas para un realce sutil y sofisticado. Tela resistente, con excelente recuperación y sensación suave al tacto.",
+    "characteristics": [
+      "Calce flare Perfect Fit",
+      "Denim estructurado con elasticidad equilibrada",
+      "Firmeza en caderas y muslos",
+      "Caída limpia desde la rodilla",
+      "Corte delantero que reduce visualmente caderas",
+      "Pasadores que cubren pinzas para realce sutil"
+    ],
     "variants": []
   },
   {
@@ -310,8 +338,15 @@
       "Imagenes/4232/CRI_7349.jpg",
       "Imagenes/4232/Copia de CRI_7351.jpg"
     ],
-    "description": "",
-    "characteristics": [],
+    "description": "Jeans skinny Perfect Fit, desarrollado en denim Power Stretch de alta adaptabilidad que estiliza sin restringir el movimiento. La tela entrega compresión moderada para realzar la silueta y mantener estructura durante el uso. Presenta desgaste estratégico en bolsillos delanteros y traseros siguiendo tendencias internacionales. Incorpora 2 pinzas en el calce para potenciar aún más el realce femenino, combinando diseño, comodidad y tecnología textil.",
+    "characteristics": [
+      "Calce skinny Perfect Fit",
+      "Denim Power Stretch de alta adaptabilidad",
+      "Compresión moderada para realce y estructura",
+      "Desgaste estratégico en bolsillos delanteros y traseros",
+      "2 pinzas para potenciar el realce femenino",
+      "Comodidad y tecnología textil"
+    ],
     "variants": []
   }
 ]

@@ -13,6 +13,7 @@ let clienteSeleccionado = null; // { rut, rut_normalized, razon_social }
 let clientLookupDebounce = null;
 let imagenesModalActual = [];
 let imagenModalIndex = 0;
+let quotePanelReady = false;
 
 const ASSET_VERSION = Date.now();
 
@@ -186,6 +187,68 @@ function cerrarVisorImagenes() {
   document.body.classList.remove("image-zoom-open");
 }
 
+function inicializarPanelCotizacionModal() {
+  if (quotePanelReady) return;
+  const modalContent = document.querySelector("#modal .modal-content");
+  const modalRight = document.querySelector("#modal .modal-right");
+  const variantContainer = document.getElementById("variantContainer");
+  const sizesPanel = document.querySelector("#modal .sizes-panel");
+  const addBtn = document.getElementById("addBtn");
+  if (!modalContent || !modalRight || !variantContainer || !sizesPanel || !addBtn) return;
+
+  const trigger = document.createElement("button");
+  trigger.id = "openQuotePanelBtn";
+  trigger.className = "quote-panel-trigger";
+  trigger.type = "button";
+  trigger.innerText = "Cotizar este modelo";
+
+  const panel = document.createElement("div");
+  panel.id = "quotePanel";
+  panel.className = "quote-panel";
+  panel.hidden = true;
+  panel.innerHTML = `
+    <div class="quote-panel-backdrop" data-close-quote-panel></div>
+    <div class="quote-panel-card">
+      <div class="quote-panel-head">
+        <div>
+          <div class="quote-panel-kicker">Cotizacion</div>
+          <div id="quotePanelModelTitle" class="quote-panel-title">Modelo</div>
+        </div>
+        <button id="closeQuotePanelBtn" type="button" class="quote-panel-close" aria-label="Cerrar panel de cotizacion">×</button>
+      </div>
+    </div>
+  `;
+
+  const panelCard = panel.querySelector(".quote-panel-card");
+  if (!panelCard) return;
+  panelCard.appendChild(sizesPanel);
+  panelCard.appendChild(addBtn);
+
+  trigger.addEventListener("click", abrirPanelCotizacionModal);
+  panel.addEventListener("click", (e) => {
+    if (e.target?.dataset?.closeQuotePanel !== undefined) cerrarPanelCotizacionModal();
+  });
+  panel.querySelector("#closeQuotePanelBtn")?.addEventListener("click", cerrarPanelCotizacionModal);
+
+  modalRight.insertBefore(trigger, variantContainer.nextSibling);
+  modalContent.appendChild(panel);
+  quotePanelReady = true;
+}
+
+function abrirPanelCotizacionModal() {
+  const panel = document.getElementById("quotePanel");
+  if (!panel) return;
+  panel.hidden = false;
+  panel.classList.add("open");
+}
+
+function cerrarPanelCotizacionModal() {
+  const panel = document.getElementById("quotePanel");
+  if (!panel) return;
+  panel.classList.remove("open");
+  panel.hidden = true;
+}
+
 function guardarDraftDelSkuActual() {
   // Borradores desactivados: no persistir cantidades al cambiar de modelo/variante
   return;
@@ -357,10 +420,10 @@ function renderGrid(lista) {
   const container = document.getElementById("grid");
   container.innerHTML = lista
     .map(
-      (p) => `
+      (p, index) => `
       <div class="card" data-family="${p.family}" onclick="verProducto('${p.family}')">
         <div class="card-title">Modelo ${p.family}</div>
-        <img src="${withCacheBust(p.main_image)}" alt="Modelo ${p.family}">
+        <img src="${withCacheBust(p.main_image)}" alt="Modelo ${p.family}" loading="${index < 4 ? "eager" : "lazy"}" decoding="async">
       </div>
     `
     )
@@ -371,12 +434,16 @@ function renderGrid(lista) {
  * MODAL: ABRIR
  ***********************/
 function verProducto(familyId) {
+  inicializarPanelCotizacionModal();
   const p = productos.find((item) => item.family === familyId);
   if (!p) return;
 
   // Reinicia drafts para evitar re-agregar items viejos al volver a abrir el modal
   resetDraftsModal();
   document.getElementById("modalTitle").innerText = "Modelo " + p.family;
+  const quotePanelModelTitle = document.getElementById("quotePanelModelTitle");
+  if (quotePanelModelTitle) quotePanelModelTitle.innerText = "Modelo " + p.family;
+  cerrarPanelCotizacionModal();
   
   // Mostrar descripción y características
   const descriptionEl = document.getElementById("description");
@@ -476,12 +543,14 @@ function verProducto(familyId) {
 document.getElementById("closeModal").onclick = () => {
   document.getElementById("modal").classList.remove("active");
   cerrarVisorImagenes();
+  cerrarPanelCotizacionModal();
 };
 
 document.getElementById("modal").onclick = (e) => {
   if (e.target.id === "modal") {
     document.getElementById("modal").classList.remove("active");
     cerrarVisorImagenes();
+    cerrarPanelCotizacionModal();
   }
 };
 
@@ -492,6 +561,7 @@ document.getElementById("imageZoomModal")?.addEventListener("click", (e) => {
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") cerrarVisorImagenes();
+  if (e.key === "Escape") cerrarPanelCotizacionModal();
 });
 
 /***********************
@@ -518,7 +588,7 @@ document.getElementById("addBtn").onclick = () => {
   }
 
   if (!agregoAlgo) {
-    alert("Ingresa al menos una cantidad");
+    mostrarToastError("Ingresa una cantidad", "Debes ingresar al menos una cantidad para agregar a la cotizacion.");
     return;
   }
 
@@ -526,6 +596,7 @@ document.getElementById("addBtn").onclick = () => {
   resetDraftsModal();
 
   actualizarCarrito();
+  cerrarPanelCotizacionModal();
   document.getElementById("modal").classList.remove("active");
 };
 
@@ -542,7 +613,11 @@ function actualizarCarrito() {
       <div class="cart-item">
         <div class="cart-item-top">
           <div class="cart-item-title">Modelo ${item.sku}</div>
-          <button class="cart-trash" onclick="eliminarItem(${index})">🗑</button>
+          <button class="cart-trash" type="button" aria-label="Eliminar modelo ${item.sku}" onclick="eliminarItem(${index})">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h2v9H7V9Zm4 0h2v9h-2V9Zm4 0h2v9h-2V9ZM6 7h12l-1 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7Z"/>
+            </svg>
+          </button>
         </div>
         <div>
           ${Object.entries(item.tallas)
@@ -686,6 +761,79 @@ function generarCSVQuoteAdmin(quote, items = []) {
   return BOM + csvBody;
 }
 
+function escapeHtmlExcel(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function generarExcelHtmlQuoteAdmin(quote, items = []) {
+  const fecha = quote?.created_at ? new Date(quote.created_at).toLocaleString() : "-";
+  const codigo = generarCodigoCotizacionVisual(quote);
+  const estado = quote?.is_ready ? "Cotización lista" : "En proceso";
+  const rut = quote?.client_rut || "";
+
+  const ordered = [...items].sort((a, b) => {
+    if (String(a.sku) !== String(b.sku)) return String(a.sku).localeCompare(String(b.sku));
+    return String(a.size).localeCompare(String(b.size), undefined, { numeric: true });
+  });
+
+  let total = 0;
+  const rows = ordered.map((it) => {
+    total += Number(it.quantity) || 0;
+    return `
+      <tr>
+        <td>${escapeHtmlExcel(it.sku)}</td>
+        <td>${escapeHtmlExcel(it.size)}</td>
+        <td class="num">${escapeHtmlExcel(it.quantity)}</td>
+      </tr>
+    `;
+  }).join("");
+
+  return `\uFEFF<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="application/vnd.ms-excel; charset=UTF-8" />
+<style>
+  body{font-family:Calibri,Segoe UI,Arial,sans-serif;background:#fff;color:#111827}
+  table{border-collapse:collapse}
+  .sheet{min-width:760px}
+  .sheet td,.sheet th{border:1px solid #d1d5db;padding:6px 8px;font-size:11pt}
+  .title{background:#111827;color:#fff;font-weight:700;font-size:13pt}
+  .section{background:#e5e7eb;color:#111827;font-weight:700}
+  .label{background:#f3f4f6;font-weight:700;width:180px}
+  .value{background:#fff}
+  .header th{background:#d71920;color:#fff;font-weight:700;text-align:left}
+  .num{text-align:right}
+  .pill{background:#ecfdf5;color:#065f46;font-weight:700}
+  .pill.warn{background:#fff7ed;color:#9a3412}
+  .total-row td{background:#111827;color:#fff;font-weight:700}
+  .spacer td{border:none;height:8px;background:#fff}
+</style>
+</head>
+<body>
+  <table class="sheet">
+    <tr><td class="title" colspan="3">RESUMEN COTIZACION</td></tr>
+    <tr><td class="label">Codigo</td><td class="value" colspan="2">${escapeHtmlExcel(codigo)}</td></tr>
+    <tr><td class="label">Tienda</td><td class="value" colspan="2">${escapeHtmlExcel(quote?.store_name || "")}</td></tr>
+    <tr><td class="label">RUT</td><td class="value" colspan="2">${escapeHtmlExcel(rut)}</td></tr>
+    <tr><td class="label">Estado</td><td class="${quote?.is_ready ? "pill" : "pill warn"}" colspan="2">${escapeHtmlExcel(estado)}</td></tr>
+    <tr><td class="label">Fecha</td><td class="value" colspan="2">${escapeHtmlExcel(fecha)}</td></tr>
+    <tr><td class="label">Total items</td><td class="value num" colspan="2">${escapeHtmlExcel(quote?.total_items || 0)}</td></tr>
+    <tr><td class="label">ID interno (UUID)</td><td class="value" colspan="2">${escapeHtmlExcel(quote?.id || "")}</td></tr>
+    <tr class="spacer"><td colspan="3"></td></tr>
+    <tr><td class="section" colspan="3">DETALLE SOLICITADO POR CLIENTE</td></tr>
+    <tr class="header"><th>Modelo</th><th>Talla</th><th>Cantidad</th></tr>
+    ${rows || '<tr><td colspan="3">Sin detalle</td></tr>'}
+    <tr class="spacer"><td colspan="3"></td></tr>
+    <tr class="total-row"><td colspan="2">TOTAL GENERAL</td><td class="num">${escapeHtmlExcel(total)}</td></tr>
+  </table>
+</body>
+</html>`;
+}
+
 function descargarCotizacionAdmin(quoteId) {
   const quote = quotesAdminCache.quotes.find((q) => q.id === quoteId);
   const items = quotesAdminCache.itemsByQuote.get(quoteId) || [];
@@ -695,13 +843,17 @@ function descargarCotizacionAdmin(quoteId) {
   }
   const codigo = generarCodigoCotizacionVisual(quote).replace(/[^\w-]/g, "_");
   const tienda = String(quote.store_name || "tienda").replace(/\s+/g, "_");
-  const csv = generarCSVQuoteAdmin(quote, items);
-  descargarArchivo(`${codigo}_${tienda}.csv`, csv, "text/csv;charset=utf-8;");
+  const excelHtml = generarExcelHtmlQuoteAdmin(quote, items);
+  descargarArchivo(`${codigo}_${tienda}.xls`, excelHtml, "application/vnd.ms-excel;charset=utf-8;");
 }
 
-function mostrarToastExito() {
+function mostrarToastExito(titulo, mensaje) {
   const toast = document.getElementById("successToast");
   if (!toast) return;
+  const titleEl = toast.querySelector("strong");
+  const msgEl = toast.querySelector("span");
+  if (titleEl && titulo) titleEl.innerText = titulo;
+  if (msgEl && mensaje) msgEl.innerText = mensaje;
   toast.hidden = false;
   toast.classList.remove("show");
   // Reinicia animacion
@@ -730,6 +882,72 @@ function mostrarToastError(titulo, mensaje) {
     toast.classList.remove("show");
     toast.hidden = true;
   }, 3300);
+}
+
+function asegurarConfirmModal() {
+  let modal = document.getElementById("confirmActionModal");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.id = "confirmActionModal";
+  modal.className = "confirm-action-modal";
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="confirm-action-backdrop" data-confirm-cancel></div>
+    <div class="confirm-action-card" role="dialog" aria-modal="true" aria-labelledby="confirmActionTitle">
+      <div class="confirm-action-icon">!</div>
+      <div class="confirm-action-copy">
+        <div id="confirmActionTitle" class="confirm-action-title">Confirmar accion</div>
+        <div id="confirmActionMsg" class="confirm-action-msg">¿Estas seguro?</div>
+      </div>
+      <div class="confirm-action-buttons">
+        <button type="button" id="confirmActionCancel" class="ghost-btn">Cancelar</button>
+        <button type="button" id="confirmActionOk" class="confirm-danger-btn">Eliminar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function mostrarConfirmacionAccion({ titulo = "Confirmar", mensaje = "¿Estas seguro?", confirmarTexto = "Aceptar" } = {}) {
+  const modal = asegurarConfirmModal();
+  const titleEl = modal.querySelector("#confirmActionTitle");
+  const msgEl = modal.querySelector("#confirmActionMsg");
+  const okBtn = modal.querySelector("#confirmActionOk");
+  const cancelBtn = modal.querySelector("#confirmActionCancel");
+  const backdrop = modal.querySelector(".confirm-action-backdrop");
+
+  if (titleEl) titleEl.innerText = titulo;
+  if (msgEl) msgEl.innerText = mensaje;
+  if (okBtn) okBtn.innerText = confirmarTexto;
+
+  modal.hidden = false;
+  modal.classList.remove("show");
+  void modal.offsetWidth;
+  modal.classList.add("show");
+
+  return new Promise((resolve) => {
+    const cleanup = (result) => {
+      modal.classList.remove("show");
+      modal.hidden = true;
+      okBtn?.removeEventListener("click", onOk);
+      cancelBtn?.removeEventListener("click", onCancel);
+      backdrop?.removeEventListener("click", onCancel);
+      document.removeEventListener("keydown", onKeydown);
+      resolve(result);
+    };
+    const onOk = () => cleanup(true);
+    const onCancel = () => cleanup(false);
+    const onKeydown = (e) => {
+      if (e.key === "Escape") cleanup(false);
+      if (e.key === "Enter") cleanup(true);
+    };
+    okBtn?.addEventListener("click", onOk);
+    cancelBtn?.addEventListener("click", onCancel);
+    backdrop?.addEventListener("click", onCancel);
+    document.addEventListener("keydown", onKeydown);
+  });
 }
 
 function setClientLookupUI({ tipo = "", texto = "", badge = "" } = {}) {
@@ -1027,6 +1245,7 @@ function renderCotizacionesAdmin(quotes = [], items = []) {
             <div class="quote-code-row">
               <span class="quote-code-pill">${codigo}</span>
               <button type="button" class="ghost-btn quote-export-btn" data-quote-export="${q.id}">Descargar Excel</button>
+              <button type="button" class="ghost-btn quote-delete-btn" data-quote-delete="${q.id}">Eliminar cotización</button>
             </div>
           </div>
           <div class="quote-meta">Total items: ${q.total_items || 0}<br>${fecha}</div>
@@ -1076,6 +1295,23 @@ async function actualizarEstadoCotizacion(quoteId, isReady) {
   if (!res.ok) {
     const txt = await res.text();
     throw new Error(`No se pudo actualizar estado: ${txt || res.status}`);
+  }
+}
+
+async function eliminarCotizacionAdmin(quoteId) {
+  if (!quotesAccessToken) throw new Error("Debes iniciar sesion");
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/quotes?id=eq.${quoteId}`, {
+    method: "DELETE",
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${quotesAccessToken}`,
+      Prefer: "return=minimal",
+    },
+  });
+
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`No se pudo eliminar cotizacion: ${txt || res.status}`);
   }
 }
 
@@ -1217,8 +1453,40 @@ function configurarPanelCotizaciones() {
 
   quotesListEl?.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-quote-export]");
-    if (!btn) return;
-    descargarCotizacionAdmin(btn.dataset.quoteExport);
+    if (btn) {
+      descargarCotizacionAdmin(btn.dataset.quoteExport);
+      return;
+    }
+
+    const deleteBtn = e.target.closest("[data-quote-delete]");
+    if (!deleteBtn) return;
+
+    const quoteId = deleteBtn.dataset.quoteDelete;
+    const quote = quotesAdminCache.quotes.find((q) => q.id === quoteId);
+    const codigo = generarCodigoCotizacionVisual(quote);
+
+    (async () => {
+      const confirmar = await mostrarConfirmacionAccion({
+        titulo: "Eliminar cotización",
+        mensaje: `Se eliminará ${codigo}${quote?.store_name ? ` (${quote.store_name})` : ""}. Esta acción no se puede deshacer.`,
+        confirmarTexto: "Sí, eliminar",
+      });
+      if (!confirmar) return;
+
+      const textoOriginal = deleteBtn.innerText;
+      deleteBtn.disabled = true;
+      deleteBtn.innerText = "Eliminando...";
+      try {
+        await eliminarCotizacionAdmin(quoteId);
+        mostrarToastExito("Cotización eliminada", "La cotización se eliminó correctamente.");
+        await cargarCotizacionesAdmin();
+      } catch (err) {
+        mostrarToastError("No se pudo eliminar", err.message || "Error eliminando cotización");
+      } finally {
+        deleteBtn.disabled = false;
+        deleteBtn.innerText = textoOriginal;
+      }
+    })();
   });
 }
 
