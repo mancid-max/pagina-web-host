@@ -1078,15 +1078,7 @@ function configurarPanelCotizaciones() {
   const passEl = document.getElementById("quotesPassword");
   const quotesListEl = document.getElementById("quotesList");
 
-  actualizarEstadoQuotesUI("");
-
-  btnOpen?.addEventListener("click", abrirQuotesModal);
-  btnClose?.addEventListener("click", cerrarQuotesModal);
-  modal?.addEventListener("click", (e) => {
-    if (e.target?.id === "quotesModal") cerrarQuotesModal();
-  });
-
-  btnLogin?.addEventListener("click", async () => {
+  const ejecutarLogin = async () => {
     const email = emailEl?.value.trim();
     const password = passEl?.value || "";
     if (!email || !password) {
@@ -1108,6 +1100,25 @@ function configurarPanelCotizaciones() {
       btnLogin.disabled = false;
       btnLogin.innerText = "Ingresar";
     }
+  };
+
+  actualizarEstadoQuotesUI("");
+
+  btnOpen?.addEventListener("click", abrirQuotesModal);
+  btnClose?.addEventListener("click", cerrarQuotesModal);
+  modal?.addEventListener("click", (e) => {
+    if (e.target?.id === "quotesModal") cerrarQuotesModal();
+  });
+
+  btnLogin?.addEventListener("click", ejecutarLogin);
+
+  [emailEl, passEl].forEach((el) => {
+    el?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        ejecutarLogin();
+      }
+    });
   });
 
   btnRefresh?.addEventListener("click", async () => {

@@ -742,7 +742,7 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
   width: min(900px, 88vw);
   max-width: 900px;
   grid-template-columns: 1fr;
-  height: min(76vh, 680px);
+  height: min(84vh, 760px);
   margin: auto;
   border-radius: 20px;
 }
@@ -767,6 +767,10 @@ box-shadow: 0 -10px 18px rgba(255,255,255,0.95), 0 10px 24px rgba(0,0,0,0.16);
   min-height: 0;
   height: auto;
   padding-bottom: 24px;
+}
+
+#quotesPanel{
+  min-height: 0;
 }
 
 .quotes-admin-head{
