@@ -853,8 +853,8 @@ function mostrarToastExito(titulo, mensaje) {
   if (!toast) return;
   const titleEl = toast.querySelector("strong");
   const msgEl = toast.querySelector("span");
-  if (titleEl && titulo) titleEl.innerText = titulo;
-  if (msgEl && mensaje) msgEl.innerText = mensaje;
+  if (titleEl) titleEl.innerText = titulo || "Cotizacion enviada con exito";
+  if (msgEl) msgEl.innerText = typeof mensaje === "string" ? mensaje : "";
   toast.hidden = false;
   toast.classList.remove("show");
   // Reinicia animacion
@@ -1514,7 +1514,7 @@ document.getElementById("sendRequest").onclick = async () => {
   try {
     await guardarCotizacionSupabase(cliente);
 
-    mostrarToastExito();
+    mostrarToastExito("Cotizacion enviada con exito", "");
     limpiarCarrito();
   } catch (error) {
     console.error(error);
