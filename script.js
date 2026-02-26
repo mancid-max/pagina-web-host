@@ -596,6 +596,7 @@ document.getElementById("addBtn").onclick = () => {
   resetDraftsModal();
 
   actualizarCarrito();
+  mostrarToastExito("Cotización agregada", "Puedes verla en Tu cotización.");
   cerrarPanelCotizacionModal();
   document.getElementById("modal").classList.remove("active");
 };

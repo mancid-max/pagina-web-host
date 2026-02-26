@@ -329,6 +329,23 @@
     "variants": []
   },
   {
+    "family": "4230",
+    "main_image": "Imagenes/4230/catalogo 4230.jpg",
+    "gallery": [
+      "Imagenes/4230/IMG_8550.JPG.jpeg",
+      "Imagenes/4230/IMG_8551.JPG.jpeg",
+      "Imagenes/4230/IMG_8552.JPG.jpeg",
+      "Imagenes/4230/IMG_8553.JPG.jpeg",
+      "Imagenes/4230/catalogo 4230.jpg"
+    ],
+    "description": "Modelo 4230: Confort, cintura palazzo.",
+    "characteristics": [
+      "Linea Confort",
+      "Cintura palazzo"
+    ],
+    "variants": []
+  },
+  {
     "family": "4232",
     "main_image": "Imagenes/4232/catalogo 42 _page-0136.jpg",
     "gallery": [
@@ -348,5 +365,54 @@
       "Comodidad y tecnología textil"
     ],
     "variants": []
+  },
+  {
+    "family": "4240",
+    "main_image": "Imagenes/4240/catalogo 4240.jpg",
+    "gallery": [
+      "Imagenes/4240/IMG_8558.PNG",
+      "Imagenes/4240/IMG_8559.PNG",
+      "Imagenes/4240/IMG_8563.PNG",
+      "Imagenes/4240/catalogo 4240.jpg"
+    ],
+    "description": "Modelo 4240: Power Stretch, cintura pitillo.",
+    "characteristics": [
+      "Tela Power Stretch",
+      "Cintura pitillo"
+    ],
+    "variants": []
+  },
+  {
+    "family": "4244",
+    "main_image": "Imagenes/4244/catalogo 4244.jpg",
+    "gallery": [
+      "Imagenes/4244/IMG_8546.JPG.jpeg",
+      "Imagenes/4244/IMG_8547.JPG.jpeg",
+      "Imagenes/4244/catalogo 4244.jpg"
+    ],
+    "description": "Modelo 4244: Power Stretch, cintura pitillo.",
+    "characteristics": [
+      "Tela Power Stretch",
+      "Cintura pitillo"
+    ],
+    "variants": []
+  },
+  {
+    "family": "4246",
+    "main_image": "Imagenes/4246/catalogo 4246.jpg",
+    "gallery": [
+      "Imagenes/4246/IMG_8569.JPG.jpeg",
+      "Imagenes/4246/IMG_8570.JPG.jpeg",
+      "Imagenes/4246/IMG_8571.JPG.jpeg",
+      "Imagenes/4246/IMG_8572.JPG.jpeg",
+      "Imagenes/4246/catalogo 4246.jpg"
+    ],
+    "description": "Modelo 4246: Perfect Fit, cintura tobillero.",
+    "characteristics": [
+      "Tela Perfect Fit",
+      "Cintura tobillero"
+    ],
+    "variants": []
   }
 ]
+

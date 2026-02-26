@@ -2425,19 +2425,19 @@ body{
 }
 
 .success-toast{
-  border-color: rgba(215,25,32,0.24);
+  border-color: rgba(16,185,129,0.26);
   background:
-    radial-gradient(120% 180% at 0% 0%, rgba(215,25,32,0.10), transparent 55%),
-    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(252,248,248,0.98));
+    radial-gradient(120% 180% at 0% 0%, rgba(16,185,129,0.12), transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,255,251,0.98));
 }
 
 .success-toast-icon{
-  background: linear-gradient(180deg, var(--mh-red), var(--mh-red-dark));
-  box-shadow: 0 8px 18px rgba(215,25,32,0.24);
+  background: linear-gradient(180deg, #10b981, #047857);
+  box-shadow: 0 8px 18px rgba(16,185,129,0.24);
 }
 
 .success-toast-text strong{
-  color: var(--mh-red-dark);
+  color: #065f46;
 }
 
 /* Ajuste fino header + ADMIN hover visible */
