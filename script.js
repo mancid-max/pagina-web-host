@@ -177,6 +177,20 @@ function renderZoomGallery() {
     };
     zoomThumbs.appendChild(thumb);
   });
+
+  asegurarMiniaturaActivaVisible(zoomThumbs);
+}
+
+function asegurarMiniaturaActivaVisible(zoomThumbs) {
+  const activeThumb = zoomThumbs.querySelector(".active-thumb");
+  if (!activeThumb) return;
+  requestAnimationFrame(() => {
+    activeThumb.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center"
+    });
+  });
 }
 
 function abrirVisorImagenes() {
