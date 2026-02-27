@@ -63,7 +63,10 @@
 
     <div class="modal-left">
         <div class="image-viewer">
-            <button id="openImageGalleryBtn" class="image-gallery-btn" type="button">Ver imágenes</button>
+            <button id="openImageGalleryBtn" class="image-gallery-btn" type="button" aria-label="Abrir imagen en pantalla completa">
+              <span class="image-gallery-icon" aria-hidden="true"></span>
+              <span class="image-gallery-label">Ver imagenes</span>
+            </button>
             <img id="viewerImg">
         </div>
         <div id="thumbContainer" class="thumbnails"></div>
@@ -99,6 +102,7 @@
     <button id="closeImageZoomBtn" class="image-zoom-close" type="button" aria-label="Cerrar visor">×</button>
     <div class="image-zoom-stage">
       <img id="imageZoomMain" alt="Vista ampliada de producto">
+      <div id="imageZoomHint" class="image-zoom-hint" aria-hidden="true">Desliza para ver imágenes</div>
     </div>
     <div id="imageZoomThumbs" class="image-zoom-thumbs"></div>
   </div>

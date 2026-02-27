@@ -14,6 +14,9 @@ let clientLookupDebounce = null;
 let imagenesModalActual = [];
 let imagenModalIndex = 0;
 let quotePanelReady = false;
+let imageZoomHintTimer = null;
+let zoomTouchStartX = null;
+let zoomTouchStartY = null;
 
 const ASSET_VERSION = Date.now();
 
@@ -93,10 +96,14 @@ function renderImages(imageList) {
 
   if (!imageList || !imageList.length) {
     viewer.src = "";
+    viewer.style.cursor = "default";
+    viewer.onclick = null;
     return;
   }
 
   viewer.src = withCacheBust(imageList[0]);
+  viewer.style.cursor = "zoom-in";
+  viewer.onclick = abrirVisorImagenes;
 
   imageList.forEach((imgSrc, index) => {
     const thumb = document.createElement("img");
@@ -178,13 +185,70 @@ function abrirVisorImagenes() {
   renderZoomGallery();
   zoomModal.hidden = false;
   document.body.classList.add("image-zoom-open");
+  mostrarHintZoom();
 }
 
 function cerrarVisorImagenes() {
   const zoomModal = document.getElementById("imageZoomModal");
   if (!zoomModal) return;
+  const hint = document.getElementById("imageZoomHint");
+  if (imageZoomHintTimer) {
+    clearTimeout(imageZoomHintTimer);
+    imageZoomHintTimer = null;
+  }
+  hint?.classList.remove("show");
   zoomModal.hidden = true;
   document.body.classList.remove("image-zoom-open");
+}
+
+function mostrarHintZoom() {
+  const hint = document.getElementById("imageZoomHint");
+  if (!hint) return;
+  const isMobileViewport = window.matchMedia("(max-width: 820px)").matches;
+  const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  if (imagenesModalActual.length < 2 || !isMobileViewport || !isTouchDevice) {
+    hint.classList.remove("show");
+    return;
+  }
+  hint.classList.add("show");
+  if (imageZoomHintTimer) clearTimeout(imageZoomHintTimer);
+  imageZoomHintTimer = setTimeout(() => {
+    hint.classList.remove("show");
+    imageZoomHintTimer = null;
+  }, 2400);
+}
+
+function moverImagenZoom(delta) {
+  const total = imagenesModalActual.length;
+  if (total < 2) return;
+  imagenModalIndex = (imagenModalIndex + delta + total) % total;
+  renderZoomGallery();
+}
+
+function inicializarSwipeZoom() {
+  const stage = document.querySelector("#imageZoomModal .image-zoom-stage");
+  if (!stage) return;
+
+  stage.addEventListener("touchstart", (e) => {
+    const t = e.changedTouches?.[0];
+    if (!t) return;
+    zoomTouchStartX = t.clientX;
+    zoomTouchStartY = t.clientY;
+  }, { passive: true });
+
+  stage.addEventListener("touchend", (e) => {
+    const t = e.changedTouches?.[0];
+    if (!t || zoomTouchStartX === null || zoomTouchStartY === null) return;
+
+    const dx = t.clientX - zoomTouchStartX;
+    const dy = t.clientY - zoomTouchStartY;
+    zoomTouchStartX = null;
+    zoomTouchStartY = null;
+
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0) moverImagenZoom(1);
+    else moverImagenZoom(-1);
+  }, { passive: true });
 }
 
 function inicializarPanelCotizacionModal() {
@@ -559,6 +623,7 @@ document.getElementById("closeImageZoomBtn")?.addEventListener("click", cerrarVi
 document.getElementById("imageZoomModal")?.addEventListener("click", (e) => {
   if (e.target.dataset.closeImageZoom !== undefined) cerrarVisorImagenes();
 });
+inicializarSwipeZoom();
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") cerrarVisorImagenes();
   if (e.key === "Escape") cerrarPanelCotizacionModal();
